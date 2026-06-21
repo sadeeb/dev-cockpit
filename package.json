@@ -1,0 +1,41 @@
+{
+  "name": "dev-cockpit",
+  "productName": "Dev Cockpit",
+  "version": "0.1.0",
+  "description": "Mission-control UI for Claude Code: structured sessions, auto-titles, GitHub issue linking, a live multi-session board, and a shared agent-driven browser.",
+  "main": "out/main/index.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "4.7.0",
+    "electron": "38.8.6",
+    "electron-vite": "3.1.0",
+    "tsx": "4.22.4",
+    "typescript": "5.9.3",
+    "vite": "6.4.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.175",
+    "@anthropic-ai/sdk": "0.104.1",
+    "@playwright/mcp": "0.0.76",
+    "dompurify": "3.4.10",
+    "highlight.js": "11.11.1",
+    "lucide-react": "1.18.0",
+    "marked": "18.0.5",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  }
+}

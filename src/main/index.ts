@@ -1,0 +1,233 @@
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
+import { writeFileSync } from 'node:fs'
+import path from 'node:path'
+import type { BrowserInputEvent, CockpitEvent, UiCommand } from '../shared/types'
+import { BrowserManager } from './browserManager'
+import { runDemo } from './demo'
+import { fixPath, preflight } from './env'
+import { SessionManager } from './sessionManager'
+import { Store } from './store'
+
+const DEMO = process.env.COCKPIT_DEMO === '1'
+const SMOKE = process.env.COCKPIT_SMOKE === '1'
+
+let win: BrowserWindow | null = null
+let store: Store
+let browsers: BrowserManager
+let manager: SessionManager
+let demoStarted = false
+const eventTaps: ((e: CockpitEvent) => void)[] = []
+
+function broadcast(e: CockpitEvent): void {
+  win?.webContents.send('cockpit:event', e)
+  for (const tap of eventTaps) tap(e)
+}
+
+function sendUiCommand(command: UiCommand): void {
+  broadcast({ kind: 'ui-command', command })
+}
+
+function createWindow(): void {
+  win = new BrowserWindow({
+    width: 1500,
+    height: 940,
+    minWidth: 1020,
+    minHeight: 640,
+    show: false,
+    backgroundColor: '#0a0d13',
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 18, y: 17 },
+    title: 'Dev Cockpit',
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
+
+  win.on('ready-to-show', () => win?.show())
+  win.on('closed', () => (win = null))
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http')) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  win.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('http://localhost') && !url.startsWith('file://')) {
+      e.preventDefault()
+      if (url.startsWith('http')) void shell.openExternal(url)
+    }
+  })
+
+  const devUrl = process.env['ELECTRON_RENDERER_URL']
+  if (devUrl) void win.loadURL(devUrl)
+  else void win.loadFile(path.join(__dirname, '../renderer/index.html'))
+
+  // Self-verification harness: COCKPIT_SHOT=/tmp/x.png captures the window.
+  const shot = process.env.COCKPIT_SHOT
+  if (shot) {
+    win.webContents.once('did-finish-load', () => {
+      setTimeout(async () => {
+        try {
+          const img = await win!.webContents.capturePage()
+          writeFileSync(shot, img.toPNG())
+          console.log(`[cockpit] screenshot written to ${shot}`)
+        } catch (e) {
+          console.error('[cockpit] screenshot failed', e)
+        }
+        if (process.env.COCKPIT_SHOT_EXIT === '1') app.quit()
+      }, Number(process.env.COCKPIT_SHOT_DELAY || 2200))
+    })
+  }
+}
+
+function buildMenu(): void {
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [{ label: 'Dev Cockpit', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Settings…', accelerator: 'Cmd+,', click: () => sendUiCommand({ c: 'open-settings' }) }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'quit' as const }] }]
+      : []),
+    {
+      label: 'File',
+      submenu: [
+        { label: 'New Session', accelerator: 'CmdOrCtrl+N', click: () => sendUiCommand({ c: 'new-session' }) },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' }
+      ]
+    },
+    { role: 'editMenu' },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Mission Control', accelerator: 'CmdOrCtrl+B', click: () => sendUiCommand({ c: 'toggle-board' }) },
+        { type: 'separator' },
+        ...Array.from({ length: 9 }, (_, i) => ({
+          label: `Session ${i + 1}`,
+          accelerator: `CmdOrCtrl+${i + 1}`,
+          click: () => sendUiCommand({ c: 'select-session-index', index: i })
+        })),
+        { type: 'separator' },
+        { role: 'reload' as const },
+        { role: 'toggleDevTools' as const }
+      ]
+    },
+    { role: 'windowMenu' }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+type Handler = (...args: never[]) => unknown
+
+function registerIpc(): void {
+  const handlers: Record<string, Handler> = {
+    listSessions: () => manager.listSessions(),
+    createSession: (opts: Parameters<SessionManager['createSession']>[0]) => manager.createSession(opts),
+    deleteSession: (id: string) => manager.deleteSession(id),
+    renameSession: (id: string, title: string) => manager.renameSession(id, title),
+    setModel: (id: string, model: string | null) => manager.setModel(id, model),
+    setPermissionMode: (id: string, mode: Parameters<SessionManager['setPermissionMode']>[1]) =>
+      manager.setPermissionMode(id, mode),
+    setBrowserEnabled: (id: string, enabled: boolean) => manager.setBrowserEnabled(id, enabled),
+    sendPrompt: (id: string, text: string) => {
+      void manager.sendPrompt(id, text)
+    },
+    cancelQueued: (id: string, index: number) => manager.cancelQueued(id, index),
+    interrupt: (id: string) => manager.interrupt(id),
+    respondPermission: (id: string, reqId: string, d: Parameters<SessionManager['respondPermission']>[2]) =>
+      manager.respondPermission(id, reqId, d),
+    loadHistory: (id: string) => manager.loadHistory(id),
+    linkIssue: (id: string, ref: string) => manager.linkIssue(id, ref),
+    unlinkIssue: (id: string) => manager.unlinkIssue(id),
+    chooseDirectory: async () => {
+      if (!win) return null
+      const res = await dialog.showOpenDialog(win, {
+        properties: ['openDirectory', 'createDirectory'],
+        message: 'Choose the working directory for this session'
+      })
+      return res.canceled ? null : (res.filePaths[0] ?? null)
+    },
+    browserOpen: async (id: string) => {
+      try {
+        await browsers.ensure(id)
+      } catch {
+        /* error already emitted as browser state */
+      }
+    },
+    browserClose: (id: string) => browsers.close(id),
+    browserNavigate: (id: string, url: string) => browsers.navigate(id, url),
+    browserSelectTab: (id: string, tabId: string) => browsers.selectTab(id, tabId),
+    getSettings: () => store.getSettings(),
+    setSettings: (patch: Partial<ReturnType<Store['getSettings']>>) => store.setSettings(patch),
+    preflight: () => preflight(store.getSettings().chromePath || undefined),
+    uiReady: () => {
+      if (DEMO && !demoStarted) {
+        demoStarted = true
+        runDemo(store, broadcast)
+      }
+    },
+    openExternal: (url: string) => {
+      if (typeof url === 'string' && url.startsWith('http')) void shell.openExternal(url)
+    }
+  }
+
+  ipcMain.handle('cockpit:cmd', async (_e, name: string, args: unknown[]) => {
+    const h = handlers[name]
+    if (!h) throw new Error(`Unknown command: ${name}`)
+    return (h as (...a: unknown[]) => unknown)(...(args ?? []))
+  })
+
+  ipcMain.on(
+    'cockpit:browser-input',
+    (_e, sessionId: string, ev: BrowserInputEvent, frameW: number, frameH: number) => {
+      browsers.input(sessionId, ev, Number(frameW) || 1280, Number(frameH) || 860)
+    }
+  )
+}
+
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+  })
+
+  void app.whenReady().then(async () => {
+    await fixPath()
+    const dataDir =
+      DEMO || SMOKE || process.env.COCKPIT_BROWSER_SMOKE === '1' ? ':memory:' : app.getPath('userData')
+    store = new Store(dataDir)
+    browsers = new BrowserManager(
+      path.join(app.getPath('userData'), 'browser-profiles'),
+      (sessionId, ev) => broadcast({ kind: 'browser', sessionId, ev }),
+      () => store.getSettings().chromePath || undefined
+    )
+    manager = new SessionManager(store, browsers, broadcast)
+    registerIpc()
+    buildMenu()
+    createWindow()
+
+    if (SMOKE) {
+      const { runSmoke } = await import('./smoke')
+      runSmoke(manager, (cb) => eventTaps.push(cb))
+    }
+    if (process.env.COCKPIT_BROWSER_SMOKE === '1') {
+      const { runBrowserSmoke } = await import('./smoke')
+      runBrowserSmoke(manager, browsers, (cb) => eventTaps.push(cb))
+    }
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+
+  app.on('before-quit', () => {
+    manager?.shutdown()
+  })
+}
