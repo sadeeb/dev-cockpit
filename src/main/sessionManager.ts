@@ -42,6 +42,8 @@ interface LiveSession {
 
 export class SessionManager {
   private live = new Map<string, LiveSession>()
+  /** Sessions whose next agent start should fork the resumed Claude session. */
+  private forkPending = new Set<string>()
 
   constructor(
     private store: Store,
@@ -92,6 +94,34 @@ export class SessionManager {
     const row = this.store.createSession(opts)
     this.emitRow(row)
     return row
+  }
+
+  /**
+   * Branch a session: same repo/model/history, but the next turn continues in
+   * a *forked* Claude session — try a second approach without losing the first.
+   */
+  forkSession(sessionId: string): SessionRow | null {
+    const src = this.store.getSession(sessionId)
+    if (!src) return null
+    const row = this.store.createSession({
+      workingDir: src.workingDir,
+      model: src.model,
+      permissionMode: src.permissionMode,
+      browserEnabled: src.browserEnabled
+    })
+    this.store.updateSession(row.id, {
+      title: `${src.title} · fork`.slice(0, 120),
+      titleSource: src.titleSource === 'default' ? 'default' : 'manual',
+      claudeSessionId: src.claudeSessionId,
+      firstPromptSent: src.firstPromptSent
+    })
+    if (src.link) {
+      this.store.setLink({ ...src.link, sessionId: row.id })
+    }
+    if (src.claudeSessionId) this.forkPending.add(row.id)
+    const fresh = this.store.getSession(row.id)
+    this.emitRow(fresh)
+    return fresh
   }
 
   deleteSession(sessionId: string): void {
@@ -155,11 +185,13 @@ export class SessionManager {
         model: row.model,
         permissionMode: row.permissionMode,
         resume: row.claudeSessionId,
+        fork: this.forkPending.has(row.id),
         mcpServers
       },
       {
         onEvent: (ev) => this.emitConvo(sessionId, ev),
         onClaudeSession: (claudeSessionId) => {
+          this.forkPending.delete(sessionId) // the fork happened; new id is ours
           const cur = this.store.getSession(sessionId)
           if (cur && cur.claudeSessionId !== claudeSessionId) {
             this.emitRow(this.store.updateSession(sessionId, { claudeSessionId }))

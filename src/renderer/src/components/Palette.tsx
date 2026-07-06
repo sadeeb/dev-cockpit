@@ -1,6 +1,7 @@
 import {
   Braces,
   GitBranch,
+  GitFork,
   Globe,
   LayoutGrid,
   Link2,
@@ -109,6 +110,13 @@ function buildCommands(state: AppState): Command[] {
         label: 'Toggle raw event stream',
         icon: <Braces size={14} />,
         run: () => store.setDrawer(id, !(state.drawer[id] ?? false))
+      },
+      {
+        id: 'fork',
+        label: 'Fork this session',
+        hint: 'branch the conversation',
+        icon: <GitFork size={14} />,
+        run: () => void store.forkSession(id)
       },
       {
         id: 'link-issue',

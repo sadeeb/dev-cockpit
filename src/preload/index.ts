@@ -13,6 +13,7 @@ const api = {
   listSessions: cmd('listSessions'),
   createSession: cmd('createSession'),
   deleteSession: cmd('deleteSession'),
+  forkSession: cmd('forkSession'),
   renameSession: cmd('renameSession'),
   setModel: cmd('setModel'),
   setPermissionMode: cmd('setPermissionMode'),

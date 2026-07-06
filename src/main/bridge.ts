@@ -62,6 +62,8 @@ export interface AgentSessionConfig {
   model: string | null
   permissionMode: PermissionModeId
   resume: string | null
+  /** With resume: branch into a new Claude session instead of continuing the old one. */
+  fork?: boolean
   mcpServers: Record<string, unknown> | null
 }
 
@@ -96,6 +98,7 @@ export class AgentSession {
     const options: Options = {
       cwd: this.cfg.cwd,
       resume: this.cfg.resume ?? undefined,
+      forkSession: this.cfg.fork && this.cfg.resume ? true : undefined,
       model: this.cfg.model ?? undefined,
       permissionMode: this.cfg.permissionMode as PermissionMode,
       allowDangerouslySkipPermissions: this.cfg.permissionMode === 'bypassPermissions' ? true : undefined,

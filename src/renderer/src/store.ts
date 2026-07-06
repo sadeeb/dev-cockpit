@@ -572,6 +572,16 @@ class CockpitStore {
     this.selectSession(row.id)
   }
 
+  async forkSession(id: string): Promise<void> {
+    const row = await api.forkSession(id)
+    if (!row) {
+      this.pushToast('error', 'Could not fork this session')
+      return
+    }
+    this.pushToast('info', 'Forked — this copy continues from the same history')
+    this.selectSession(row.id)
+  }
+
   async deleteSession(id: string): Promise<void> {
     this.state.modal = null
     this.commit()

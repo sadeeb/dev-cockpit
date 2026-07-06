@@ -3,6 +3,7 @@ import {
   ChevronDown,
   CircleDot,
   GitBranch,
+  GitFork,
   GitPullRequestArrow,
   Globe,
   Link2,
@@ -212,6 +213,13 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
             onClick={() => store.toggleBrowser(row.id, !row.browserEnabled)}
           >
             <Globe size={15} />
+          </button>
+          <button
+            className="icon-btn"
+            title="Fork this session — try a different approach from the same history"
+            onClick={() => void store.forkSession(row.id)}
+          >
+            <GitFork size={15} />
           </button>
           <button
             className={cx('icon-btn', changesOpen && 'active')}

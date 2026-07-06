@@ -70,6 +70,64 @@ export function runSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent) =>
 }
 
 /**
+ * COCKPIT_FORK_SMOKE=1 — verifies session forking end-to-end with a real
+ * agent: teach session A a word, fork it, and ask the fork what the word was.
+ * Passes only if the fork answers from inherited history AND ends up with a
+ * different Claude session id than the source. Costs ~2 tiny Haiku turns.
+ */
+export function runForkSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent) => void) => void): void {
+  const dir = mkdtempSync(path.join(tmpdir(), 'cockpit-fork-'))
+  writeFileSync(path.join(dir, 'README.md'), '# fork smoke\n')
+  const log = (...a: unknown[]): void => console.log('[fsmoke]', ...a)
+
+  const a = manager.createSession({ workingDir: dir, model: 'haiku', permissionMode: 'default', browserEnabled: false })
+  let forkId: string | null = null
+  let forkAnswer = ''
+  let done = false
+
+  const finish = (ok: boolean, reason: string): void => {
+    if (done) return
+    done = true
+    log(ok ? 'PASS' : 'FAIL', '—', reason)
+    setTimeout(() => app.exit(ok ? 0 : 1), 400)
+  }
+
+  tap((e) => {
+    if (e.kind !== 'convo') return
+    if (e.sessionId === a.id && e.ev.t === 'turn-end') {
+      if (!forkId) {
+        const src = manager.listSessions().find((s) => s.id === a.id)
+        log('source turn done; claudeSessionId =', src?.claudeSessionId)
+        const fork = manager.forkSession(a.id)
+        if (!fork) return finish(false, 'forkSession returned null')
+        forkId = fork.id
+        log('forked →', fork.id, 'inherits claudeSessionId =', fork.claudeSessionId)
+        void manager.sendPrompt(fork.id, 'Reply with exactly the secret word I told you earlier — just the word.')
+      }
+    }
+    if (forkId && e.sessionId === forkId) {
+      if (e.ev.t === 'assistant') forkAnswer += e.ev.parts.map((p) => p.text).join(' ')
+      if (e.ev.t === 'turn-end') {
+        const src = manager.listSessions().find((s) => s.id === a.id)
+        const fk = manager.listSessions().find((s) => s.id === forkId)
+        const remembered = /mango/i.test(forkAnswer)
+        const diverged = !!fk?.claudeSessionId && fk.claudeSessionId !== src?.claudeSessionId
+        log('fork answered:', JSON.stringify(forkAnswer.slice(0, 80)), '| diverged:', diverged)
+        finish(
+          remembered && diverged,
+          remembered && diverged
+            ? 'fork inherited history and branched into its own session'
+            : `remembered=${remembered} diverged=${diverged}`
+        )
+      }
+    }
+  })
+
+  void manager.sendPrompt(a.id, 'The secret word is: mango. Reply with exactly: ok')
+  setTimeout(() => finish(false, 'timeout after 240s'), 240000)
+}
+
+/**
  * COCKPIT_BROWSER_SMOKE=1 — verifies the shared-browser plumbing without an
  * agent: launches the per-session Chromium, waits for a CDP screencast frame,
  * then attaches a real Playwright MCP server over the same CDP endpoint and

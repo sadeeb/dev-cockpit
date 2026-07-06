@@ -304,6 +304,7 @@ export interface CockpitApi {
   listSessions(): Promise<SessionRow[]>
   createSession(opts: CreateSessionOpts): Promise<SessionRow>
   deleteSession(sessionId: string): Promise<void>
+  forkSession(sessionId: string): Promise<SessionRow | null>
   renameSession(sessionId: string, title: string): Promise<void>
   setModel(sessionId: string, model: string | null): Promise<void>
   setPermissionMode(sessionId: string, mode: PermissionModeId): Promise<void>

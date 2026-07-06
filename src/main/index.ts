@@ -183,6 +183,7 @@ function registerIpc(): void {
       }
       return manager.createSession(opts)
     },
+    forkSession: (id: string) => manager.forkSession(id),
     deleteSession: async (id: string) => {
       const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
       procs.stopSession(id)
@@ -300,7 +301,9 @@ if (!gotLock) {
   void app.whenReady().then(async () => {
     await fixPath()
     const dataDir =
-      DEMO || SMOKE || process.env.COCKPIT_BROWSER_SMOKE === '1' ? ':memory:' : app.getPath('userData')
+      DEMO || SMOKE || process.env.COCKPIT_BROWSER_SMOKE === '1' || process.env.COCKPIT_FORK_SMOKE === '1'
+        ? ':memory:'
+        : app.getPath('userData')
     store = new Store(dataDir)
     browsers = new BrowserManager(
       path.join(app.getPath('userData'), 'browser-profiles'),
@@ -320,6 +323,10 @@ if (!gotLock) {
     if (process.env.COCKPIT_BROWSER_SMOKE === '1') {
       const { runBrowserSmoke } = await import('./smoke')
       runBrowserSmoke(manager, browsers, (cb) => eventTaps.push(cb))
+    }
+    if (process.env.COCKPIT_FORK_SMOKE === '1') {
+      const { runForkSmoke } = await import('./smoke')
+      runForkSmoke(manager, (cb) => eventTaps.push(cb))
     }
 
     app.on('activate', () => {
