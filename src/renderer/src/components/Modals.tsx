@@ -1,4 +1,4 @@
-import { CircleDot, FolderOpen, Globe, TriangleAlert, X } from 'lucide-react'
+import { CircleDot, FolderOpen, GitBranch, Globe, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import {
   MODEL_CHOICES,
@@ -38,6 +38,7 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
   const [model, setModel] = useState<string | null>(s?.defaultModel ?? null)
   const [mode, setMode] = useState<PermissionModeId>(s?.defaultPermissionMode ?? 'default')
   const [browser, setBrowser] = useState(false)
+  const [worktree, setWorktree] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const pick = async (): Promise<void> => {
@@ -50,7 +51,13 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
     setBusy(true)
     try {
       await store.saveSettings({ defaultWorkingDir: dir, defaultModel: model, defaultPermissionMode: mode })
-      await store.createSession({ workingDir: dir, model, permissionMode: mode, browserEnabled: browser })
+      await store.createSession({
+        workingDir: dir,
+        model,
+        permissionMode: mode,
+        browserEnabled: browser,
+        useWorktree: worktree
+      })
     } finally {
       setBusy(false)
     }
@@ -96,6 +103,14 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
         <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} />
         <span>
           <Globe size={13} /> Enable the shared browser (Playwright) — the agent can drive your app while you watch
+        </span>
+      </label>
+
+      <label className="field check">
+        <input type="checkbox" checked={worktree} onChange={(e) => setWorktree(e.target.checked)} />
+        <span>
+          <GitBranch size={13} /> Own branch + worktree — run sessions in the same repo without them trampling each
+          other; merge back when done
         </span>
       </label>
 

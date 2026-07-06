@@ -5,7 +5,7 @@ import type { BrowserInputEvent, CockpitEvent, UiCommand } from '../shared/types
 import { BrowserManager } from './browserManager'
 import { demoGitChanges, demoGitFileDiff, runDemo } from './demo'
 import { fixPath, preflight } from './env'
-import { gitChanges, gitCommit, gitDiscard, gitFileDiff } from './git'
+import { createWorktree, gitChanges, gitCommit, gitDiscard, gitFileDiff, mergeWorktree, removeWorktree, worktreeInfo } from './git'
 import { SessionManager } from './sessionManager'
 import { Store } from './store'
 
@@ -121,8 +121,26 @@ type Handler = (...args: never[]) => unknown
 function registerIpc(): void {
   const handlers: Record<string, Handler> = {
     listSessions: () => manager.listSessions(),
-    createSession: (opts: Parameters<SessionManager['createSession']>[0]) => manager.createSession(opts),
-    deleteSession: (id: string) => manager.deleteSession(id),
+    createSession: async (opts: Parameters<SessionManager['createSession']>[0] & { useWorktree?: boolean }) => {
+      if (opts.useWorktree && !DEMO) {
+        const wt = await createWorktree(opts.workingDir)
+        if (wt.ok && wt.dir) {
+          broadcast({ kind: 'toast', level: 'info', message: `Session works on branch ${wt.branch}` })
+          return manager.createSession({ ...opts, workingDir: wt.dir })
+        }
+        broadcast({
+          kind: 'toast',
+          level: 'error',
+          message: `Worktree failed (${wt.error ?? 'unknown'}) — using the repo directly.`
+        })
+      }
+      return manager.createSession(opts)
+    },
+    deleteSession: async (id: string) => {
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      manager.deleteSession(id)
+      if (dir) await removeWorktree(dir)
+    },
     renameSession: (id: string, title: string) => manager.renameSession(id, title),
     setModel: (id: string, model: string | null) => manager.setModel(id, model),
     setPermissionMode: (id: string, mode: Parameters<SessionManager['setPermissionMode']>[1]) =>
@@ -163,6 +181,16 @@ function registerIpc(): void {
     gitDiscard: (id: string, file: string) => {
       const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
       return dir ? gitDiscard(dir, file) : { ok: false, error: 'unknown session' }
+    },
+    gitWorktreeInfo: (id: string) => {
+      if (DEMO) return { isWorktree: true, branch: 'fix/142-samesite-redirect', baseDir: '/Users/dev/acme-web' }
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? worktreeInfo(dir) : null
+    },
+    gitMergeBack: (id: string) => {
+      if (DEMO) return { ok: false, error: 'Demo mode — nothing to merge.' }
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? mergeWorktree(dir) : { ok: false, error: 'unknown session' }
     },
     browserOpen: async (id: string) => {
       try {

@@ -245,6 +245,14 @@ export interface CreateSessionOpts {
   model: string | null
   permissionMode: PermissionModeId
   browserEnabled: boolean
+  /** Work on an isolated git worktree + branch instead of the repo itself. */
+  useWorktree?: boolean
+}
+
+export interface WorktreeStatus {
+  isWorktree: boolean
+  branch: string
+  baseDir: string
 }
 
 export interface ModelChoice {
@@ -288,6 +296,8 @@ export interface CockpitApi {
   gitFileDiff(sessionId: string, path: string): Promise<string>
   gitCommit(sessionId: string, message: string): Promise<GitCommitResult>
   gitDiscard(sessionId: string, path: string): Promise<GitCommitResult>
+  gitWorktreeInfo(sessionId: string): Promise<WorktreeStatus | null>
+  gitMergeBack(sessionId: string): Promise<GitCommitResult>
   browserOpen(sessionId: string): Promise<void>
   browserClose(sessionId: string): Promise<void>
   browserNavigate(sessionId: string, url: string): Promise<void>

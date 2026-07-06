@@ -1,6 +1,6 @@
-import { Check, ChevronDown, ChevronRight, GitBranch, Loader2, RotateCw, Undo2, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, GitBranch, GitMerge, Loader2, RotateCw, Undo2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { GitChanges, SessionRow } from '../../../shared/types'
+import type { GitChanges, SessionRow, WorktreeStatus } from '../../../shared/types'
 import { store } from '../store'
 import { cx } from '../util'
 
@@ -85,6 +85,9 @@ export function ChangesPanel({ row }: { row: SessionRow }): ReactNode {
   const [changes, setChanges] = useState<GitChanges | null>(null)
   const [message, setMessage] = useState('')
   const [committing, setCommitting] = useState(false)
+  const [worktree, setWorktree] = useState<WorktreeStatus | null>(null)
+  const [mergeConfirm, setMergeConfirm] = useState(false)
+  const [merging, setMerging] = useState(false)
   const alive = useRef(true)
 
   const refresh = useCallback(async (): Promise<void> => {
@@ -96,12 +99,27 @@ export function ChangesPanel({ row }: { row: SessionRow }): ReactNode {
     alive.current = true
     setChanges(null)
     void refresh()
+    void window.cockpit.gitWorktreeInfo(row.id).then((w) => alive.current && setWorktree(w))
     const t = setInterval(() => void refresh(), 4000)
     return () => {
       alive.current = false
       clearInterval(t)
     }
-  }, [refresh])
+  }, [refresh, row.id])
+
+  const mergeBack = async (): Promise<void> => {
+    if (!mergeConfirm) {
+      setMergeConfirm(true)
+      window.setTimeout(() => setMergeConfirm(false), 4000)
+      return
+    }
+    setMergeConfirm(false)
+    setMerging(true)
+    const res = await window.cockpit.gitMergeBack(row.id)
+    setMerging(false)
+    if (res.ok) store.pushToast('info', `Merged ${worktree?.branch ?? 'branch'} into the base repo (${res.hash ?? ''})`)
+    else store.pushToast('error', res.error ?? 'Merge failed')
+  }
 
   const commit = async (): Promise<void> => {
     const msg = message.trim()
@@ -128,6 +146,17 @@ export function ChangesPanel({ row }: { row: SessionRow }): ReactNode {
           {changes?.branch || '…'}
         </span>
         <span className="changes-count">{files.length}</span>
+        {worktree?.isWorktree && (
+          <button
+            className={cx('btn', 'small', mergeConfirm && 'danger')}
+            title={`Merge ${worktree.branch} back into ${worktree.baseDir}`}
+            disabled={merging}
+            onClick={() => void mergeBack()}
+          >
+            {merging ? <Loader2 size={12} className="spin" /> : <GitMerge size={12} />}
+            {mergeConfirm ? 'Merge?' : 'Merge back'}
+          </button>
+        )}
         <button className="icon-btn" title="Refresh" onClick={() => void refresh()}>
           <RotateCw size={13} />
         </button>

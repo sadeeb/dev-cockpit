@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { rmSync, statSync } from 'node:fs'
+import { mkdirSync, rmSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { GitChanges, GitCommitResult, GitFileChange } from '../shared/types'
@@ -103,6 +103,89 @@ export async function gitCommit(dir: string, message: string): Promise<GitCommit
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, error: msg.split('\n').find((l) => l.trim()) ?? 'commit failed' }
+  }
+}
+
+// ── worktrees: one branch + directory per session, derived (not stored) ──────
+// A session "is a worktree session" when its git-dir differs from the common
+// git-dir; the base repo and branch fall out of the same probe. Nothing about
+// worktrees is persisted, so sessions survive schema-free.
+
+export interface WorktreeInfo {
+  isWorktree: boolean
+  branch: string
+  baseDir: string
+}
+
+const WORKTREE_MARKER = '.cockpit-worktrees'
+
+export async function worktreeInfo(dir: string): Promise<WorktreeInfo | null> {
+  try {
+    const gitDir = (await git(dir, ['rev-parse', '--git-dir'])).trim()
+    const common = (await git(dir, ['rev-parse', '--git-common-dir'])).trim()
+    const branch = (await git(dir, ['rev-parse', '--abbrev-ref', 'HEAD'])).trim()
+    const isWorktree = path.resolve(dir, gitDir) !== path.resolve(dir, common)
+    const baseDir = isWorktree ? path.dirname(path.resolve(dir, common)) : path.resolve(dir)
+    return { isWorktree, branch, baseDir }
+  } catch {
+    return null
+  }
+}
+
+export async function createWorktree(
+  repoDir: string
+): Promise<{ ok: boolean; dir?: string; branch?: string; error?: string }> {
+  try {
+    await git(repoDir, ['rev-parse', '--git-dir'])
+  } catch {
+    return { ok: false, error: 'Not a git repository — worktree sessions need one.' }
+  }
+  try {
+    const stamp = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+    const rand = Math.random().toString(36).slice(2, 6)
+    const slug = `${stamp}-${rand}`
+    const branch = `cockpit/${slug}`
+    const dir = path.join(path.dirname(repoDir), `${path.basename(repoDir)}${WORKTREE_MARKER}`, slug)
+    mkdirSync(path.dirname(dir), { recursive: true })
+    await git(repoDir, ['worktree', 'add', '-b', branch, dir])
+    return { ok: true, dir, branch }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, error: msg.split('\n').find((l) => l.includes('fatal')) ?? msg.split('\n')[0] }
+  }
+}
+
+/** Remove a worktree the cockpit created (never touches dirs it didn't make). The branch survives. */
+export async function removeWorktree(dir: string): Promise<void> {
+  if (!dir.includes(WORKTREE_MARKER)) return
+  const info = await worktreeInfo(dir)
+  if (!info?.isWorktree) return
+  await git(info.baseDir, ['worktree', 'remove', '--force', dir]).catch(() => {})
+}
+
+/** Merge the session's branch back into whatever the base repo has checked out. */
+export async function mergeWorktree(dir: string): Promise<GitCommitResult> {
+  const info = await worktreeInfo(dir)
+  if (!info?.isWorktree) return { ok: false, error: 'This session is not on a worktree branch.' }
+  try {
+    if ((await git(dir, ['status', '--porcelain'])).trim()) {
+      return { ok: false, error: 'Commit this session’s changes first (Changes panel → Commit all).' }
+    }
+    if ((await git(info.baseDir, ['status', '--porcelain'])).trim()) {
+      return { ok: false, error: 'The base repo has uncommitted changes — clean it up before merging.' }
+    }
+    await git(info.baseDir, ['merge', '--no-edit', info.branch])
+    const hash = (await git(info.baseDir, ['rev-parse', '--short', 'HEAD'])).trim()
+    return { ok: true, hash }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const conflict = /CONFLICT|Automatic merge failed/i.test(msg)
+    return {
+      ok: false,
+      error: conflict
+        ? 'Merge conflict — resolve it in the base repo (the merge was left in progress there).'
+        : (msg.split('\n').find((l) => l.trim()) ?? 'merge failed')
+    }
   }
 }
 

@@ -29,6 +29,8 @@ const api = {
   gitFileDiff: cmd('gitFileDiff'),
   gitCommit: cmd('gitCommit'),
   gitDiscard: cmd('gitDiscard'),
+  gitWorktreeInfo: cmd('gitWorktreeInfo'),
+  gitMergeBack: cmd('gitMergeBack'),
   browserOpen: cmd('browserOpen'),
   browserClose: cmd('browserClose'),
   browserNavigate: cmd('browserNavigate'),
