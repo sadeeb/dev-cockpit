@@ -7,6 +7,7 @@ import {
 } from '../../../shared/types'
 import { store, type AppState } from '../store'
 import { cx, shortPath } from '../util'
+import { Palette } from './Palette'
 import { PreflightList } from './Welcome'
 
 function ModalShell({ title, children, onClose, wide }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }): ReactNode {
@@ -293,5 +294,7 @@ export function Modals({ state }: { state: AppState }): ReactNode {
       return <BrowserSafetyModal id={m.id} />
     case 'link-issue':
       return <LinkIssueModal state={state} id={m.id} />
+    case 'palette':
+      return <Palette state={state} />
   }
 }

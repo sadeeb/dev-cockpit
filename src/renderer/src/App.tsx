@@ -1,6 +1,6 @@
 import { CircleAlert, Info } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useApp } from './store'
+import { useEffect, type ReactNode } from 'react'
+import { store, useApp } from './store'
 import { Board } from './components/Board'
 import { Modals } from './components/Modals'
 import { SessionView } from './components/SessionView'
@@ -9,6 +9,18 @@ import { Welcome } from './components/Welcome'
 
 export default function App(): ReactNode {
   const state = useApp()
+
+  // ⌘K anywhere opens the command palette (toggles if already open)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        store.openModal(store.state.modal?.m === 'palette' ? null : { m: 'palette' })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   if (!state.booted) {
     return <div className="boot" />

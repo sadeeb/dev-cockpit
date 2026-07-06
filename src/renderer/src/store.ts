@@ -89,6 +89,7 @@ export type Modal =
   | { m: 'delete-session'; id: string }
   | { m: 'browser-safety'; id: string }
   | { m: 'link-issue'; id: string }
+  | { m: 'palette' }
 
 export type View = { kind: 'welcome' } | { kind: 'board' } | { kind: 'session'; id: string }
 
@@ -372,6 +373,7 @@ class CockpitStore {
           } else {
             this.state.view = { kind: 'board' }
           }
+          if (dv?.includes('palette')) this.state.modal = { m: 'palette' } // demo screenshots
         }
         break
       case 'session-updated': {
