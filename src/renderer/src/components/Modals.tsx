@@ -175,6 +175,29 @@ function SettingsModal({ state }: { state: AppState }): ReactNode {
         />
       </label>
 
+      {(s?.permissionRules?.length ?? 0) > 0 && (
+        <label className="field">
+          <span>Trusted tools — “always, for this repo” rules</span>
+          <div className="rule-list">
+            {s!.permissionRules.map((r, i) => (
+              <span className="rule-chip" key={i} title={r.dir || 'everywhere'}>
+                <b>{r.tool}</b>
+                <em>{r.dir ? shortPath(r.dir, window.cockpit.meta.home) : 'everywhere'}</em>
+                <button
+                  aria-label="Remove rule"
+                  onClick={() =>
+                    void store.saveSettings({ permissionRules: s!.permissionRules.filter((_, j) => j !== i) })
+                  }
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+          <em className="field-hint">Removing a rule takes effect for newly started agents.</em>
+        </label>
+      )}
+
       <div className="welcome-preflight in-modal">
         <h3>Environment checks</h3>
         <PreflightList state={state} />

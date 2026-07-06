@@ -64,6 +64,8 @@ export interface AgentSessionConfig {
   resume: string | null
   /** With resume: branch into a new Claude session instead of continuing the old one. */
   fork?: boolean
+  /** Tool names already trusted for this repo (persisted rules). */
+  preAllowed?: string[]
   mcpServers: Record<string, unknown> | null
 }
 
@@ -77,6 +79,8 @@ export interface AgentCallbacks {
   requestPermission(req: PermissionRequest, signal: AbortSignal): Promise<PermissionDecision>
   /** Launch the session browser before a Playwright tool is allowed to run. */
   ensureBrowser(): Promise<void>
+  /** The user chose "always for this repo" — persist the rule. */
+  persistAllow(toolName: string): void
 }
 
 export class AgentSession {
@@ -89,7 +93,9 @@ export class AgentSession {
   constructor(
     private cfg: AgentSessionConfig,
     private cb: AgentCallbacks
-  ) {}
+  ) {
+    for (const t of cfg.preAllowed ?? []) this.alwaysAllow.add(t)
+  }
 
   async start(): Promise<void> {
     if (this.started) return
@@ -147,12 +153,14 @@ export class AgentSession {
     }
     const decision = await this.cb.requestPermission(req, opts.signal)
     if (decision.behavior === 'allow') {
-      if (decision.always) this.alwaysAllow.add(toolName)
+      if (decision.always || decision.alwaysForRepo) this.alwaysAllow.add(toolName)
+      if (decision.alwaysForRepo) this.cb.persistAllow(toolName)
       if (decision.setMode) void this.setPermissionMode(decision.setMode)
+      const remember = decision.always || decision.alwaysForRepo
       return {
         behavior: 'allow',
         updatedInput: input,
-        updatedPermissions: decision.always && opts.suggestions?.length ? opts.suggestions : undefined
+        updatedPermissions: remember && opts.suggestions?.length ? opts.suggestions : undefined
       }
     }
     return { behavior: 'deny', message: decision.message || 'The user declined this action.' }

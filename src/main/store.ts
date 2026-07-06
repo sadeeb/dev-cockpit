@@ -18,7 +18,8 @@ export const DEFAULT_SETTINGS: Settings = {
   browserSafetyAcked: false,
   chromePath: '',
   sendOnEnter: true,
-  notifications: true
+  notifications: true,
+  permissionRules: []
 }
 
 interface Backend {

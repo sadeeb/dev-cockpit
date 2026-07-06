@@ -77,6 +77,13 @@ export function PermissionCard({
           <button className="btn" onClick={() => respond({ behavior: 'allow', always: true })}>
             Always allow {shortToolName(req)}
           </button>
+          <button
+            className="btn"
+            title="Persists across sessions and restarts — manage in Settings"
+            onClick={() => respond({ behavior: 'allow', alwaysForRepo: true })}
+          >
+            Always, for this repo
+          </button>
           <button className="btn subtle danger" onClick={() => respond({ behavior: 'deny' })}>
             <X size={13} /> Deny
           </button>

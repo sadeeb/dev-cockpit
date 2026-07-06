@@ -60,6 +60,8 @@ export interface PermissionDecision {
   behavior: 'allow' | 'deny'
   /** allow + remember for the rest of this session (per tool name) */
   always?: boolean
+  /** allow + persist a rule for this repo across sessions and restarts */
+  alwaysForRepo?: boolean
   /** optionally switch permission mode after allowing (plan approval) */
   setMode?: PermissionModeId
   /** deny message forwarded to the agent */
@@ -262,6 +264,14 @@ export interface Settings {
   sendOnEnter: boolean
   /** Notify natively when an unfocused session needs you / errors / finishes. */
   notifications: boolean
+  /** Persisted "always allow" rules; dir scopes a rule to one repo. */
+  permissionRules: PermissionRule[]
+}
+
+export interface PermissionRule {
+  tool: string
+  dir: string
+  createdAt: number
 }
 
 export interface CreateSessionOpts {

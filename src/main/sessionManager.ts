@@ -186,6 +186,10 @@ export class SessionManager {
         permissionMode: row.permissionMode,
         resume: row.claudeSessionId,
         fork: this.forkPending.has(row.id),
+        preAllowed: this.store
+          .getSettings()
+          .permissionRules.filter((r) => r.dir === row.workingDir || r.dir === '')
+          .map((r) => r.tool),
         mcpServers
       },
       {
@@ -209,7 +213,16 @@ export class SessionManager {
         onResult: (stats) => this.onResult(sessionId, stats),
         onExit: (err) => this.onAgentExit(sessionId, err),
         requestPermission: (req, signal) => this.onPermissionRequest(sessionId, req, signal),
-        ensureBrowser: () => this.browsers.ensure(sessionId)
+        ensureBrowser: () => this.browsers.ensure(sessionId),
+        persistAllow: (toolName) => {
+          const rules = this.store.getSettings().permissionRules
+          const dir = this.store.getSession(sessionId)?.workingDir ?? ''
+          if (!rules.some((r) => r.tool === toolName && r.dir === dir)) {
+            this.store.setSettings({
+              permissionRules: [...rules, { tool: toolName, dir, createdAt: Date.now() }]
+            })
+          }
+        }
       }
     )
     l.agent = agent
