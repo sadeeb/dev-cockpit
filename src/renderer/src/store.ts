@@ -34,7 +34,7 @@ export interface ToolView {
 }
 
 export type ConvoItem =
-  | { k: 'user'; key: string; text: string; ts: number }
+  | { k: 'user'; key: string; text: string; ts: number; images?: string[] }
   | { k: 'context'; key: string; repo: string; n: number; ts: number }
   | { k: 'msg'; key: string; parts: AssistantPart[]; streaming: boolean; ts: number }
   | { k: 'tool'; key: string; tool: ToolView; ts: number }
@@ -92,8 +92,8 @@ export interface AppState {
   browserPanel: Record<string, boolean>
   drawer: Record<string, boolean>
   changesPanel: Record<string, boolean>
-  /** Text a panel wants appended to a session's composer (nonce marks each request). */
-  composerInsert: Record<string, { text: string; nonce: number }>
+  /** Content a panel wants appended to a session's composer (nonce marks each request). */
+  composerInsert: Record<string, { text: string; images?: string[]; nonce: number }>
   settings: Settings | null
   preflight: PreflightCheck[] | null
   toasts: Toast[]
@@ -133,7 +133,7 @@ const nextKey = (prefix: string): string => `${prefix}-${++keyCounter}`
 export function reduceConvo(c: ConvoState, ev: ConvoEvent): ConvoState {
   switch (ev.t) {
     case 'user':
-      c.items.push({ k: 'user', key: nextKey('u'), text: ev.text, ts: ev.ts })
+      c.items.push({ k: 'user', key: nextKey('u'), text: ev.text, ts: ev.ts, images: ev.images })
       break
     case 'issue-context':
       c.items.push({ k: 'context', key: nextKey('ctx'), repo: ev.repo, n: ev.issueNumber, ts: ev.ts })
@@ -530,8 +530,8 @@ class CockpitStore {
     await api.deleteSession(id)
   }
 
-  send(id: string, text: string): void {
-    void api.sendPrompt(id, text)
+  send(id: string, text: string, images?: { mediaType: string; data: string }[]): void {
+    void api.sendPrompt(id, text, images)
   }
 
   interrupt(id: string): void {
@@ -594,10 +594,10 @@ class CockpitStore {
     this.commit()
   }
 
-  /** Drop text into the session's composer so the user can add words and send. */
-  insertIntoComposer(id: string, text: string): void {
+  /** Drop text (and optional image data-URLs) into the session's composer so the user can add words and send. */
+  insertIntoComposer(id: string, text: string, images?: string[]): void {
     const nonce = (this.state.composerInsert[id]?.nonce ?? 0) + 1
-    this.state.composerInsert = { ...this.state.composerInsert, [id]: { text, nonce } }
+    this.state.composerInsert = { ...this.state.composerInsert, [id]: { text, images, nonce } }
     this.commit()
   }
 

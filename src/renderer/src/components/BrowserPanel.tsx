@@ -1,4 +1,4 @@
-import { Globe, MessageSquarePlus, Power, RotateCw, SquareChevronRight, Trash2, X } from 'lucide-react'
+import { Crosshair, Globe, Loader2, MessageSquarePlus, Power, RotateCw, SquareChevronRight, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { BrowserInputEvent, ConsoleEntry, SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
@@ -91,12 +91,32 @@ function ConsoleDrawer({ row, entries, url }: { row: SessionRow; entries: Consol
 export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
   const b = state.browsers[row.id]
   const [urlDraft, setUrlDraft] = useState<string | null>(null)
+  const [inspecting, setInspecting] = useState(false)
+  const [inspectBusy, setInspectBusy] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
   const frame = b?.frame
 
   const sendInput = (ev: BrowserInputEvent): void => {
     if (!frame) return
     window.cockpit.browserInput(row.id, ev, frame.w, frame.h)
+  }
+
+  /** Point-at-element: click something in the preview → selector + crop land in the composer. */
+  const inspectAt = async (x: number, y: number): Promise<void> => {
+    setInspectBusy(true)
+    const hit = await window.cockpit.browserInspect(row.id, x, y).catch(() => null)
+    setInspectBusy(false)
+    setInspecting(false)
+    if (!hit) {
+      store.pushToast('error', 'Could not identify that element — is the page still loading?')
+      return
+    }
+    const label = hit.text ? ` ("${hit.text.slice(0, 60)}${hit.text.length > 60 ? '…' : ''}")` : ''
+    store.insertIntoComposer(
+      row.id,
+      `Looking at \`${hit.selector}\`${label} — screenshot attached:`,
+      hit.shot ? [`data:${hit.shot.mediaType};base64,${hit.shot.data}`] : undefined
+    )
   }
 
   const norm = (e: React.MouseEvent): { x: number; y: number } => {
@@ -110,6 +130,14 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
 
   const mouse = (kind: 'down' | 'up' | 'move') => (e: React.MouseEvent) => {
     if (!frame) return
+    if (inspecting) {
+      // armed: the click picks an element instead of driving the page
+      if (kind === 'down' && !inspectBusy) {
+        const p = norm(e)
+        void inspectAt(p.x, p.y)
+      }
+      return
+    }
     if (kind === 'move' && e.buttons === 0) return
     const { x, y } = norm(e)
     sendInput({
@@ -157,6 +185,14 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
           />
         </form>
         <button
+          className={cx('icon-btn', inspecting && 'active')}
+          title={inspecting ? 'Cancel point-at-element' : 'Point at an element — click it in the preview to drop it into the chat'}
+          disabled={!frame}
+          onClick={() => setInspecting(!inspecting)}
+        >
+          {inspectBusy ? <Loader2 size={13} className="spin" /> : <Crosshair size={13} />}
+        </button>
+        <button
           className="icon-btn"
           title="Reload"
           onClick={() => b?.url && void window.cockpit.browserNavigate(row.id, b.url)}
@@ -190,7 +226,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
         </div>
       )}
 
-      <div className="browser-stage">
+      <div className={cx('browser-stage', inspecting && 'inspecting')}>
         {frame ? (
           <img
             ref={imgRef}

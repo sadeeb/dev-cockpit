@@ -90,8 +90,22 @@ export interface TurnStats {
 
 // Events that drive a single session's conversation view.
 // History replay re-uses the same event vocabulary.
+/** Base64 image attached to a prompt (no data: prefix). */
+export interface PromptImage {
+  mediaType: string
+  data: string
+}
+
+/** What the point-at-element inspector found under the cursor. */
+export interface InspectResult {
+  selector: string
+  text: string
+  html: string
+  shot: PromptImage | null
+}
+
 export type ConvoEvent =
-  | { t: 'user'; text: string; ts: number }
+  | { t: 'user'; text: string; ts: number; images?: string[] }
   | { t: 'issue-context'; repo: string; issueNumber: number; ts: number }
   | { t: 'text-start'; kind: 'text' | 'thinking'; ts: number }
   | { t: 'text-delta'; kind: 'text' | 'thinking'; delta: string }
@@ -262,7 +276,7 @@ export interface CockpitApi {
   setModel(sessionId: string, model: string | null): Promise<void>
   setPermissionMode(sessionId: string, mode: PermissionModeId): Promise<void>
   setBrowserEnabled(sessionId: string, enabled: boolean): Promise<void>
-  sendPrompt(sessionId: string, text: string): Promise<void>
+  sendPrompt(sessionId: string, text: string, images?: PromptImage[]): Promise<void>
   cancelQueued(sessionId: string, index: number): Promise<void>
   interrupt(sessionId: string): Promise<void>
   respondPermission(sessionId: string, requestId: string, decision: PermissionDecision): Promise<void>
@@ -278,6 +292,7 @@ export interface CockpitApi {
   browserClose(sessionId: string): Promise<void>
   browserNavigate(sessionId: string, url: string): Promise<void>
   browserSelectTab(sessionId: string, tabId: string): Promise<void>
+  browserInspect(sessionId: string, x: number, y: number): Promise<InspectResult | null>
   getSettings(): Promise<Settings>
   setSettings(patch: Partial<Settings>): Promise<Settings>
   preflight(): Promise<PreflightCheck[]>

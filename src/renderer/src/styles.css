@@ -328,6 +328,8 @@ input, textarea, select { font: inherit; color: inherit; }
   border-radius: var(--r); border-top-left-radius: 4px;
   padding: 11px 14px; white-space: pre-wrap; line-height: 1.55; font-weight: 550;
 }
+.user-images { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.user-images img { max-height: 160px; max-width: 260px; border-radius: 8px; border: 1.5px solid var(--ink); display: block; }
 .row.context {
   display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--tx1);
   background: var(--grape-soft); border: 1.5px dashed var(--c-purple);
@@ -491,6 +493,18 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .queue-chip button { display: inline-flex; color: var(--tx2); border-radius: 50%; padding: 2px; }
 .queue-chip button:hover { color: #fff; background: var(--c-red); }
+
+.attach-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.attach-chip { position: relative; display: inline-flex; }
+.attach-chip img { height: 56px; border-radius: 8px; border: 1.5px solid var(--ink); display: block; }
+.attach-chip button {
+  position: absolute; top: -6px; right: -6px; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--ink); color: var(--paper);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.attach-chip button:hover { background: var(--c-red); color: #fff; }
+
+.browser-stage.inspecting img { cursor: crosshair; box-shadow: 0 0 0 2.5px var(--c-yellow); }
 
 .composer {
   display: flex; align-items: flex-end; gap: 10px;

@@ -128,8 +128,8 @@ function registerIpc(): void {
     setPermissionMode: (id: string, mode: Parameters<SessionManager['setPermissionMode']>[1]) =>
       manager.setPermissionMode(id, mode),
     setBrowserEnabled: (id: string, enabled: boolean) => manager.setBrowserEnabled(id, enabled),
-    sendPrompt: (id: string, text: string) => {
-      void manager.sendPrompt(id, text)
+    sendPrompt: (id: string, text: string, images?: Parameters<SessionManager['sendPrompt']>[2]) => {
+      void manager.sendPrompt(id, text, images)
     },
     cancelQueued: (id: string, index: number) => manager.cancelQueued(id, index),
     interrupt: (id: string) => manager.interrupt(id),
@@ -174,6 +174,7 @@ function registerIpc(): void {
     browserClose: (id: string) => browsers.close(id),
     browserNavigate: (id: string, url: string) => browsers.navigate(id, url),
     browserSelectTab: (id: string, tabId: string) => browsers.selectTab(id, tabId),
+    browserInspect: (id: string, x: number, y: number) => browsers.inspect(id, x, y),
     getSettings: () => store.getSettings(),
     setSettings: (patch: Partial<ReturnType<Store['getSettings']>>) => store.setSettings(patch),
     preflight: () => preflight(store.getSettings().chromePath || undefined),

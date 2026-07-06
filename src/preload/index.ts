@@ -33,6 +33,7 @@ const api = {
   browserClose: cmd('browserClose'),
   browserNavigate: cmd('browserNavigate'),
   browserSelectTab: cmd('browserSelectTab'),
+  browserInspect: cmd('browserInspect'),
   getSettings: cmd('getSettings'),
   setSettings: cmd('setSettings'),
   preflight: cmd('preflight'),

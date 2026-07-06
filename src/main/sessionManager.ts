@@ -6,6 +6,7 @@ import type {
   PermissionDecision,
   PermissionModeId,
   PermissionRequest,
+  PromptImage,
   SessionRow,
   SessionStatus,
   TurnStats
@@ -24,9 +25,14 @@ interface PendingPermission {
   resolve: (d: PermissionDecision) => void
 }
 
+interface QueuedPrompt {
+  text: string
+  images?: PromptImage[]
+}
+
 interface LiveSession {
   agent: AgentSession | null
-  queue: string[]
+  queue: QueuedPrompt[]
   pendingPerms: Map<string, PendingPermission>
   turnActive: boolean
   lastResultCost: number
@@ -205,8 +211,8 @@ export class SessionManager {
 
     const next = l.queue.shift()
     if (next !== undefined) {
-      this.emitConvo(sessionId, { t: 'queue', pending: [...l.queue] })
-      void this.sendPrompt(sessionId, next)
+      this.emitConvo(sessionId, { t: 'queue', pending: l.queue.map((q) => q.text) })
+      void this.sendPrompt(sessionId, next.text, next.images)
     }
   }
 
@@ -266,27 +272,32 @@ export class SessionManager {
 
   // ── prompts ───────────────────────────────────────────────────────────────
 
-  async sendPrompt(sessionId: string, text: string): Promise<void> {
+  async sendPrompt(sessionId: string, text: string, images?: PromptImage[]): Promise<void> {
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed && !images?.length) return
     const row = this.store.getSession(sessionId)
     if (!row) return
     const l = this.liveFor(sessionId)
 
     if (l.turnActive || l.sending) {
-      l.queue.push(trimmed)
-      this.emitConvo(sessionId, { t: 'queue', pending: [...l.queue] })
+      l.queue.push({ text: trimmed, images })
+      this.emitConvo(sessionId, { t: 'queue', pending: l.queue.map((q) => q.text) })
       return
     }
 
     l.sending = true
     try {
-      this.emitConvo(sessionId, { t: 'user', text: trimmed, ts: Date.now() })
+      this.emitConvo(sessionId, {
+        t: 'user',
+        text: trimmed,
+        ts: Date.now(),
+        images: images?.map((i) => `data:${i.mediaType};base64,${i.data}`)
+      })
 
       // First prompt: kick off async titling (never blocks the agent).
       if (!row.firstPromptSent) {
         this.emitRow(this.store.updateSession(sessionId, { firstPromptSent: true }))
-        if (row.titleSource === 'default') this.titleAsync(sessionId, trimmed)
+        if (row.titleSource === 'default' && trimmed) this.titleAsync(sessionId, trimmed)
       }
 
       // Issue linking: detect refs, resolve, inject context ahead of the prompt.
@@ -303,7 +314,7 @@ export class SessionManager {
       l.turnActive = true
       this.emitConvo(sessionId, { t: 'turn-start', ts: Date.now() })
       this.setStatus(sessionId, 'running')
-      agent.send(prompt)
+      agent.send(prompt, images)
     } catch (e) {
       l.turnActive = false
       this.emitConvo(sessionId, {
@@ -322,7 +333,7 @@ export class SessionManager {
     const l = this.live.get(sessionId)
     if (!l) return
     l.queue.splice(index, 1)
-    this.emitConvo(sessionId, { t: 'queue', pending: [...l.queue] })
+    this.emitConvo(sessionId, { t: 'queue', pending: l.queue.map((q) => q.text) })
   }
 
   private titleAsync(sessionId: string, prompt: string): void {

@@ -344,10 +344,16 @@ export class AgentSession {
     }
   }
 
-  send(text: string): void {
+  send(text: string, images?: { mediaType: string; data: string }[]): void {
+    const content: unknown[] = (images ?? []).map((img) => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType, data: img.data }
+    }))
+    // the API rejects empty text blocks — images can travel alone
+    if (text.trim() || content.length === 0) content.push({ type: 'text', text })
     this.input.push({
       type: 'user',
-      message: { role: 'user', content: [{ type: 'text', text }] },
+      message: { role: 'user', content },
       parent_tool_use_id: null
     } as SDKUserMessage)
   }

@@ -144,7 +144,7 @@ export function runBrowserSmoke(
               params: {
                 name: 'browser_navigate',
                 arguments: {
-                  url: 'data:text/html,<title>cockpit</title><h1>shared browser ok</h1><script>console.log("cockpit-console-check")</script>'
+                  url: 'data:text/html,<title>cockpit</title><h1 id="hero" style="height:90vh;margin:0">shared browser ok</h1><script>console.log("cockpit-console-check")</script>'
                 }
               }
             })
@@ -158,7 +158,13 @@ export function runBrowserSmoke(
             const poll = setInterval(() => {
               if (gotConsole) {
                 clearInterval(poll)
-                finish(true, 'frame + MCP attach + console capture all work')
+                void (async () => {
+                  // point-at-element on the page we just navigated to
+                  const hit = await browsers.inspect(row.id, 0.5, 0.5).catch(() => null)
+                  log('inspect:', hit ? `${hit.selector} "${hit.text}" shot=${hit.shot ? hit.shot.data.length + 'b' : 'none'}` : 'null')
+                  const inspectOk = !!hit && hit.selector.includes('#hero') && !!hit.shot
+                  finish(inspectOk, inspectOk ? 'frame + MCP + console + inspect all work' : 'inspect failed')
+                })()
               } else if (Date.now() > deadline) {
                 clearInterval(poll)
                 finish(false, 'navigate ok but no console event captured')

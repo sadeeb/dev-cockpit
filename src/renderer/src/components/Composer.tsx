@@ -32,6 +32,12 @@ export function TodoStrip({ convo }: { convo: ConvoState }): ReactNode {
   )
 }
 
+/** data:<type>;base64,<data> → API image block parts */
+function splitDataUrl(dataUrl: string): { mediaType: string; data: string } | null {
+  const m = dataUrl.match(/^data:(image\/[\w.+-]+);base64,(.+)$/)
+  return m ? { mediaType: m[1], data: m[2] } : null
+}
+
 export function Composer({
   row,
   convo,
@@ -39,9 +45,10 @@ export function Composer({
 }: {
   row: SessionRow
   convo: ConvoState
-  insert?: { text: string; nonce: number }
+  insert?: { text: string; images?: string[]; nonce: number }
 }): ReactNode {
   const [text, setText] = useState('')
+  const [attachments, setAttachments] = useState<string[]>([])
   const ref = useRef<HTMLTextAreaElement>(null)
   const sendOnEnter = store.state.settings?.sendOnEnter ?? true
   const busy = row.status === 'running' || row.status === 'waiting'
@@ -50,14 +57,30 @@ export function Composer({
     ref.current?.focus()
   }, [row.id])
 
-  // Panels (e.g. the browser console) drop text in; the user adds words and sends.
+  // Panels (browser console, point-at-element) drop content in; the user adds words and sends.
   const lastInsert = useRef(0)
   useEffect(() => {
     if (!insert || insert.nonce === lastInsert.current) return
     lastInsert.current = insert.nonce
-    setText((t) => (t.trim() ? `${t.replace(/\s+$/, '')}\n\n${insert.text}` : insert.text))
+    if (insert.text) setText((t) => (t.trim() ? `${t.replace(/\s+$/, '')}\n\n${insert.text}` : insert.text))
+    if (insert.images?.length) setAttachments((a) => [...a, ...insert.images!].slice(0, 6))
     ref.current?.focus()
   }, [insert])
+
+  const onPaste = (e: React.ClipboardEvent): void => {
+    const files = [...e.clipboardData.items].filter((it) => it.type.startsWith('image/'))
+    if (!files.length) return
+    e.preventDefault()
+    for (const it of files) {
+      const f = it.getAsFile()
+      if (!f) continue
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') setAttachments((a) => [...a, reader.result as string].slice(0, 6))
+      }
+      reader.readAsDataURL(f)
+    }
+  }
 
   useEffect(() => {
     const el = ref.current
@@ -68,9 +91,11 @@ export function Composer({
 
   const submit = (): void => {
     const t = text.trim()
-    if (!t) return
-    store.send(row.id, t)
+    const images = attachments.map(splitDataUrl).filter((i): i is { mediaType: string; data: string } => i !== null)
+    if (!t && !images.length) return
+    store.send(row.id, t, images.length ? images : undefined)
     setText('')
+    setAttachments([])
   }
 
   const onKeyDown = (e: React.KeyboardEvent): void => {
@@ -103,12 +128,25 @@ export function Composer({
           ))}
         </div>
       )}
+      {attachments.length > 0 && (
+        <div className="attach-row">
+          {attachments.map((a, i) => (
+            <span className="attach-chip" key={i}>
+              <img src={a} alt={`attachment ${i + 1}`} />
+              <button aria-label="Remove attachment" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}>
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
       <div className={cx('composer', busy && 'busy')}>
         <textarea
           ref={ref}
           value={text}
           rows={1}
           spellCheck={false}
+          onPaste={onPaste}
           placeholder={
             row.firstPromptSent
               ? busy
@@ -128,7 +166,7 @@ export function Composer({
           <button
             className="btn send"
             title={sendOnEnter ? 'Send (Enter)' : 'Send (⌘Enter)'}
-            disabled={!text.trim()}
+            disabled={!text.trim() && attachments.length === 0}
             onClick={submit}
           >
             <Send size={14} />

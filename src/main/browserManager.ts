@@ -2,7 +2,14 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdirSync, rmSync } from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
-import type { BrowserEvent, BrowserInputEvent, BrowserTab, ConsoleEntry, ConsoleLevel } from '../shared/types'
+import type {
+  BrowserEvent,
+  BrowserInputEvent,
+  BrowserTab,
+  ConsoleEntry,
+  ConsoleLevel,
+  InspectResult
+} from '../shared/types'
 import { CdpClient, activateTarget, listTargets, waitForCdp } from './cdp'
 import { findChrome, findNode, getFixedPath } from './env'
 
@@ -359,6 +366,74 @@ export class BrowserManager {
         windowsVirtualKeyCode: keyCodeFor(ev.key),
         nativeVirtualKeyCode: keyCodeFor(ev.key)
       })
+    }
+  }
+
+  /**
+   * Point-at-element: resolve what's under the (normalized) cursor, build a
+   * readable selector, and crop a screenshot around it — so the human can say
+   * "this thing" to the agent instead of describing DOM by hand.
+   */
+  async inspect(sessionId: string, nx: number, ny: number): Promise<InspectResult | null> {
+    const page = this.live.get(sessionId)?.page
+    if (!page) return null
+    const expr = `(() => {
+      const x = Math.round(${Number(nx)} * innerWidth), y = Math.round(${Number(ny)} * innerHeight)
+      const el = document.elementFromPoint(x, y)
+      if (!el) return null
+      const sel = (start) => {
+        const parts = []
+        let n = start
+        while (n && n.nodeType === 1 && parts.length < 5) {
+          if (n.id) { parts.unshift('#' + n.id); break }
+          let p = n.tagName.toLowerCase()
+          const cls = [...n.classList].slice(0, 2).join('.')
+          if (cls) p += '.' + cls
+          const sibs = n.parentElement ? [...n.parentElement.children].filter(c => c.tagName === n.tagName) : []
+          if (sibs.length > 1) p += ':nth-of-type(' + (sibs.indexOf(n) + 1) + ')'
+          parts.unshift(p)
+          n = n.parentElement
+        }
+        return parts.join(' > ')
+      }
+      const r = el.getBoundingClientRect()
+      return JSON.stringify({
+        selector: sel(el),
+        text: (el.innerText || el.getAttribute('aria-label') || '').trim().slice(0, 160),
+        html: el.outerHTML.slice(0, 600),
+        rect: { x: r.x + scrollX, y: r.y + scrollY, w: r.width, h: r.height }
+      })
+    })()`
+    try {
+      const res = (await page.send('Runtime.evaluate', { expression: expr, returnByValue: true })) as {
+        result?: { value?: unknown }
+      }
+      if (typeof res.result?.value !== 'string') return null
+      const found = JSON.parse(res.result.value) as {
+        selector: string
+        text: string
+        html: string
+        rect: { x: number; y: number; w: number; h: number }
+      }
+      const pad = 12
+      const clip = {
+        x: Math.max(0, found.rect.x - pad),
+        y: Math.max(0, found.rect.y - pad),
+        width: Math.max(48, Math.min(found.rect.w + pad * 2, 1400)),
+        height: Math.max(48, Math.min(found.rect.h + pad * 2, 1000)),
+        scale: 1
+      }
+      const shot = (await page
+        .send('Page.captureScreenshot', { format: 'png', clip })
+        .catch(() => null)) as { data?: string } | null
+      return {
+        selector: found.selector,
+        text: found.text,
+        html: found.html,
+        shot: shot?.data ? { mediaType: 'image/png', data: shot.data } : null
+      }
+    } catch {
+      return null
     }
   }
 

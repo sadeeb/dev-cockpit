@@ -25,7 +25,16 @@ function Item({ item, streamingCaret }: { item: ConvoItem; streamingCaret: boole
       return (
         <div className="row user">
           <div className="row-label">You</div>
-          <div className="user-bubble">{item.text}</div>
+          <div className="user-bubble">
+            {item.images && item.images.length > 0 && (
+              <div className="user-images">
+                {item.images.map((src, i) => (
+                  <img key={i} src={src} alt={`attachment ${i + 1}`} />
+                ))}
+              </div>
+            )}
+            {item.text}
+          </div>
         </div>
       )
     case 'context':
