@@ -17,6 +17,7 @@ import { cx, fmtCost, shortPath } from '../util'
 import { BrowserPanel } from './BrowserPanel'
 import { ChangesPanel } from './ChangesPanel'
 import { Composer } from './Composer'
+import { ConfettiBurst } from './Confetti'
 import { Conversation } from './Conversation'
 import { ProcessPanel } from './ProcessPanel'
 
@@ -181,6 +182,20 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
   const procOpen = state.procPanel[row.id] ?? false
   const procsRunning = (state.procs[row.id]?.procs ?? []).some((p) => p.running)
 
+  // plan hits 100% *while you watch* → confetti (never on merely opening a done session)
+  const done = convo.todos.filter((t) => t.status === 'completed').length
+  const total = convo.todos.length
+  const [burst, setBurst] = useState(0)
+  const prevPlan = useRef<{ id: string; done: number; total: number } | null>(null)
+  useEffect(() => {
+    const prev = prevPlan.current
+    prevPlan.current = { id: row.id, done, total }
+    if (!prev || prev.id !== row.id) return // first sight of this session — just record
+    if (total > 0 && done === total && !(prev.total === total && prev.done === total)) {
+      setBurst((b) => b + 1)
+    }
+  }, [row.id, done, total])
+
   return (
     <div className="session-view">
       <header className="session-head">
@@ -247,6 +262,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
 
       <div className="session-body">
         <div className="session-center">
+          {burst > 0 && <ConfettiBurst key={burst} />}
           <Conversation convo={convo} row={row} />
           <Composer row={row} convo={convo} insert={state.composerInsert[row.id]} />
         </div>

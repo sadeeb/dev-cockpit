@@ -311,7 +311,7 @@ input, textarea, select { font: inherit; color: inherit; }
 
 /* ── conversation ── */
 .session-body { flex: 1; display: flex; min-height: 0; }
-.session-center { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.session-center { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
 .convo-wrap { flex: 1; position: relative; min-height: 0; }
 .convo-scroll { height: 100%; overflow-y: auto; }
 .convo { max-width: 860px; margin: 0 auto; padding: 22px 26px 30px; display: flex; flex-direction: column; gap: 14px; }
@@ -694,9 +694,30 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .drawer-line:hover { color: var(--code-tx); background: rgba(255, 255, 255, 0.04); }
 
+/* ── confetti: the plan is done ── */
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 40; }
+.confetti span {
+  position: absolute; top: -14px; border-radius: 2px;
+  animation: confetti-fall ease-in forwards;
+}
+@keyframes confetti-fall {
+  0% { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(var(--spin)); opacity: 0.85; }
+}
+
 /* ── board ── */
 .board-wrap { flex: 1; overflow-y: auto; }
-.board-head { padding: 28px 30px 6px; }
+.board-head { padding: 28px 30px 6px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+
+.cost-spark { display: flex; align-items: flex-end; gap: 10px; padding-bottom: 2px; }
+.spark-bars { display: flex; align-items: flex-end; gap: 3px; height: 34px; }
+.spark-bar { width: 9px; border-radius: 3px 3px 0 0; display: inline-block; min-height: 4px; }
+.spark-bar.c-blue { background: var(--c-blue); }
+.spark-bar.c-yellow { background: var(--c-yellow); }
+.spark-bar.c-orange { background: var(--c-orange); }
+.spark-bar.c-green { background: var(--c-green); }
+.spark-bar.c-purple { background: var(--c-purple); }
+.spark-total { font-family: var(--mono); font-size: 10.5px; font-weight: 700; color: var(--tx2); white-space: nowrap; }
 .board-head h1 { font-size: 30px; font-weight: 850; letter-spacing: -0.03em; }
 .board-head h1::after { content: "."; color: var(--c-orange); }
 .board-head p { margin-top: 4px; font-size: 12.5px; }

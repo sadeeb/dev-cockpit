@@ -127,14 +127,41 @@ function Card({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
   )
 }
 
+const SPARK_COLORS = ['c-blue', 'c-yellow', 'c-orange', 'c-green', 'c-purple']
+
+function CostSpark({ state }: { state: AppState }): ReactNode {
+  const costs = state.sessions.map((s) => ({ title: s.title, cost: s.totalCostUsd }))
+  const total = costs.reduce((a, b) => a + b.cost, 0)
+  if (total <= 0) return null
+  const max = Math.max(...costs.map((c) => c.cost))
+  return (
+    <div className="cost-spark">
+      <div className="spark-bars">
+        {costs.map((c, i) => (
+          <span
+            key={i}
+            className={cx('spark-bar', SPARK_COLORS[i % SPARK_COLORS.length])}
+            title={`${c.title} — ${fmtCost(c.cost)}`}
+            style={{ height: `${Math.max(12, (c.cost / max) * 100)}%` }}
+          />
+        ))}
+      </div>
+      <span className="spark-total">{fmtCost(total)} today’s flying</span>
+    </div>
+  )
+}
+
 export function Board({ state }: { state: AppState }): ReactNode {
   return (
     <div className="board-wrap">
       <div className="board-head">
-        <h1>Mission Control</h1>
-        <p className="dim">
-          All birds in the air: every session, its checklist, tools, and live browser at a glance.
-        </p>
+        <div>
+          <h1>Mission Control</h1>
+          <p className="dim">
+            All birds in the air: every session, its checklist, tools, and live browser at a glance.
+          </p>
+        </div>
+        <CostSpark state={state} />
       </div>
       <div className="board">
         {state.sessions.map((s) => (

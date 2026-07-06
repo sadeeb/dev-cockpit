@@ -215,5 +215,17 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   convo(c.id, { t: 'turn-end', ts: now - 935000, stats: { ok: true, costUsd: 0.0455, durationMs: 64000, numTurns: 9, inputTokens: 48211, outputTokens: 3120 } })
   store.updateSession(c.id, { status: 'done' })
 
+  // COCKPIT_DEMO_VIEW=session:0+confetti — complete the plan after a beat so
+  // the confetti burst can be watched (and screenshotted) for free.
+  if (process.env.COCKPIT_DEMO_VIEW?.includes('confetti')) {
+    setTimeout(() => {
+      convo(a.id, {
+        t: 'todos',
+        todos: demoTodos.map((t) => ({ ...t, status: 'completed' as const })),
+        ts: Date.now()
+      })
+    }, 3200)
+  }
+
   broadcast({ kind: 'sessions', sessions: store.listSessions() })
 }
