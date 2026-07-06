@@ -1,5 +1,61 @@
-import type { BrowserEvent, CockpitEvent, ConvoEvent } from '../shared/types'
+import type { BrowserEvent, CockpitEvent, ConvoEvent, GitChanges } from '../shared/types'
 import { Store } from './store'
+
+/** Canned working-tree state so the Changes panel demos without a real repo. */
+export function demoGitChanges(): GitChanges {
+  return {
+    ok: true,
+    branch: 'fix/142-samesite-redirect',
+    files: [
+      { path: 'src/middleware/auth.ts', status: 'M', additions: 1, deletions: 1 },
+      { path: 'src/middleware/auth.test.ts', status: 'A', additions: 38, deletions: 0 },
+      { path: 'docs/session-cookies.md', status: '?', additions: 12, deletions: 0 }
+    ]
+  }
+}
+
+export function demoGitFileDiff(file: string): string {
+  if (file === 'src/middleware/auth.ts') {
+    return [
+      'diff --git a/src/middleware/auth.ts b/src/middleware/auth.ts',
+      '--- a/src/middleware/auth.ts',
+      '+++ b/src/middleware/auth.ts',
+      '@@ -12,7 +12,7 @@ export function sessionCookie(res: Response) {',
+      '   res.cookie("acme_session", token, {',
+      '     httpOnly: true,',
+      '-    sameSite: "strict",',
+      '+    sameSite: "lax",',
+      '     secure: true,',
+      '   })',
+      ' }'
+    ].join('\n')
+  }
+  if (file === 'src/middleware/auth.test.ts') {
+    return [
+      'diff --git a/src/middleware/auth.test.ts b/src/middleware/auth.test.ts',
+      '--- /dev/null',
+      '+++ b/src/middleware/auth.test.ts',
+      '@@ -0,0 +1,8 @@',
+      '+import { sessionCookie } from "./auth"',
+      '+',
+      '+test("survives the OAuth callback redirect", () => {',
+      '+  const res = mockResponse()',
+      '+  sessionCookie(res)',
+      '+  expect(res.cookies.acme_session.sameSite).toBe("lax")',
+      '+  expect(res.cookies.acme_session.secure).toBe(true)',
+      '+})'
+    ].join('\n')
+  }
+  return [
+    'diff --git a/docs/session-cookies.md b/docs/session-cookies.md',
+    '--- /dev/null',
+    '+++ b/docs/session-cookies.md',
+    '@@ -0,0 +1,3 @@',
+    '+# Session cookies',
+    '+',
+    '+Why we use SameSite=lax on the auth cookie.'
+  ].join('\n')
+}
 
 /** A fake screencast frame (mock pricing page) so the browser panel renders without Chromium. */
 function demoFrame(): string {

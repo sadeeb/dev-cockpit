@@ -419,6 +419,7 @@ input, textarea, select { font: inherit; color: inherit; }
 .diff-line.del { background: rgba(234, 55, 55, 0.18); color: #ffb3a8; }
 .diff-line.add { background: rgba(0, 170, 60, 0.16); color: #a9ecc9; }
 .diff-line.same { color: var(--code-dim); }
+.diff-line.hunk { color: #7fb4ee; background: rgba(0, 114, 227, 0.14); font-weight: 700; }
 .diff-gutter { width: 20px; flex-shrink: 0; text-align: center; color: var(--code-dim); }
 .diff-line.del .diff-gutter { color: #ff8a7a; }
 .diff-line.add .diff-gutter { color: #4fd98a; }
@@ -574,6 +575,58 @@ input, textarea, select { font: inherit; color: inherit; }
 .console-line.error .console-level { color: #ff8a7a; }
 .console-line .console-text { flex: 1; min-width: 0; white-space: pre-wrap; word-break: break-word; user-select: text; }
 .console-line .console-loc { flex-shrink: 0; color: var(--code-dim); font-size: 9.5px; }
+
+/* ── changes panel: the living working tree ── */
+.changes-panel {
+  width: 420px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-left: 1.5px solid var(--ink); background: var(--paper); min-width: 320px;
+}
+.changes-head {
+  display: flex; align-items: center; gap: 7px; padding: 8px 10px;
+  border-bottom: 1.5px solid var(--line); font-weight: 700;
+}
+.changes-branch { font-family: var(--mono); font-size: 11.5px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.changes-count {
+  min-width: 18px; height: 18px; padding: 0 6px; border-radius: 999px;
+  background: var(--ink); color: var(--paper); font-size: 10.5px; font-weight: 800;
+  font-family: var(--mono); display: inline-flex; align-items: center; justify-content: center;
+}
+.changes-body { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.changes-empty { padding: 16px 8px; color: var(--tx2); font-size: 12.5px; display: flex; gap: 8px; align-items: center; }
+.changes-nodiff { padding: 8px 10px; color: var(--tx2); font-size: 11.5px; font-style: italic; }
+
+.change-file { border: 1.5px solid var(--line); border-radius: var(--r-sm); background: var(--card); overflow: hidden; }
+.change-row { display: flex; align-items: center; gap: 7px; padding: 7px 9px; cursor: pointer; font-size: 12px; }
+.change-row:hover { background: var(--paper2); }
+.change-status {
+  width: 17px; height: 17px; border-radius: 5px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; font-weight: 800; color: #fff;
+}
+.change-status.s-M { background: var(--c-blue); }
+.change-status.s-A { background: var(--c-green); }
+.change-status.s-D { background: var(--c-red); }
+.change-status.s-R { background: var(--c-purple); }
+.change-status.s-U { background: var(--c-orange); }
+.change-path { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+.change-counts { display: inline-flex; gap: 6px; font-family: var(--mono); font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
+.change-counts .add { color: var(--c-green); font-style: normal; }
+.change-counts .del { color: var(--c-red); font-style: normal; }
+.change-discard {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; border-radius: 999px; color: var(--tx2);
+  font-size: 10px; font-weight: 800; padding: 0 4px; flex-shrink: 0;
+}
+.change-discard:hover { background: var(--ink); color: var(--paper); }
+.change-discard.confirming { background: var(--c-red); color: #fff; }
+.change-file .diff { border-radius: 0; border-top: 1.5px solid var(--line); max-height: 260px; }
+
+.changes-commit { display: flex; gap: 8px; padding: 9px 10px; border-top: 1.5px solid var(--ink); }
+.changes-commit input {
+  flex: 1; min-width: 0; background: var(--card); border: 1.5px solid var(--ink); border-radius: 999px;
+  padding: 5px 12px; font-size: 12px; outline: none; user-select: text;
+}
+.changes-commit input:focus { box-shadow: 0 0 0 2.5px rgba(0, 114, 227, 0.25); }
 
 /* ── event drawer ── */
 .drawer { width: 380px; flex-shrink: 0; border-left: 1.5px solid var(--ink); background: var(--code-bg); display: flex; flex-direction: column; }

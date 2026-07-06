@@ -91,6 +91,7 @@ export interface AppState {
   browsers: Record<string, BrowserUiState>
   browserPanel: Record<string, boolean>
   drawer: Record<string, boolean>
+  changesPanel: Record<string, boolean>
   /** Text a panel wants appended to a session's composer (nonce marks each request). */
   composerInsert: Record<string, { text: string; nonce: number }>
   settings: Settings | null
@@ -292,6 +293,7 @@ class CockpitStore {
     browsers: {},
     browserPanel: {},
     drawer: {},
+    changesPanel: {},
     composerInsert: {},
     settings: null,
     preflight: null,
@@ -350,7 +352,10 @@ class CockpitStore {
           const dv = api.meta.demoView
           if (dv?.startsWith('session')) {
             const idx = Math.min(Number(dv.split(':')[1] ?? 0) || 0, this.state.sessions.length - 1)
-            this.state.view = { kind: 'session', id: this.state.sessions[idx].id }
+            const id = this.state.sessions[idx].id
+            this.state.view = { kind: 'session', id }
+            // demo screenshots want the changes panel visible
+            this.state.changesPanel = { ...this.state.changesPanel, [id]: true }
           } else {
             this.state.view = { kind: 'board' }
           }
@@ -581,6 +586,11 @@ class CockpitStore {
 
   setDrawer(id: string, open: boolean): void {
     this.state.drawer = { ...this.state.drawer, [id]: open }
+    this.commit()
+  }
+
+  setChangesPanel(id: string, open: boolean): void {
+    this.state.changesPanel = { ...this.state.changesPanel, [id]: open }
     this.commit()
   }
 

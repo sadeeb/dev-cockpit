@@ -2,6 +2,7 @@ import {
   Braces,
   ChevronDown,
   CircleDot,
+  GitBranch,
   GitPullRequestArrow,
   Globe,
   Link2,
@@ -12,6 +13,7 @@ import { MODEL_CHOICES, PERMISSION_MODES, type SessionRow } from '../../../share
 import { store, type AppState } from '../store'
 import { cx, fmtCost, shortPath } from '../util'
 import { BrowserPanel } from './BrowserPanel'
+import { ChangesPanel } from './ChangesPanel'
 import { Composer } from './Composer'
 import { Conversation } from './Conversation'
 
@@ -172,6 +174,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
   }
   const browserOpen = state.browserPanel[row.id] ?? false
   const drawerOpen = state.drawer[row.id] ?? false
+  const changesOpen = state.changesPanel[row.id] ?? false
 
   return (
     <div className="session-view">
@@ -207,6 +210,13 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
             <Globe size={15} />
           </button>
           <button
+            className={cx('icon-btn', changesOpen && 'active')}
+            title="Working-tree changes (diff, commit, discard)"
+            onClick={() => store.setChangesPanel(row.id, !changesOpen)}
+          >
+            <GitBranch size={15} />
+          </button>
+          <button
             className={cx('icon-btn', drawerOpen && 'active')}
             title="Raw agent event stream"
             onClick={() => store.setDrawer(row.id, !drawerOpen)}
@@ -222,6 +232,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
           <Composer row={row} convo={convo} insert={state.composerInsert[row.id]} />
         </div>
         {row.browserEnabled && browserOpen && <BrowserPanel state={state} row={row} />}
+        {changesOpen && <ChangesPanel row={row} />}
         {drawerOpen && <EventDrawer sessionId={row.id} state={state} />}
       </div>
     </div>

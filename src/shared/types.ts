@@ -188,6 +188,26 @@ export type UiCommand =
   | { c: 'open-settings' }
   | { c: 'select-session-index'; index: number }
 
+export interface GitFileChange {
+  path: string
+  status: 'M' | 'A' | 'D' | 'R' | 'U' | '?'
+  additions: number
+  deletions: number
+}
+
+export interface GitChanges {
+  ok: boolean
+  error?: string
+  branch: string
+  files: GitFileChange[]
+}
+
+export interface GitCommitResult {
+  ok: boolean
+  error?: string
+  hash?: string
+}
+
 export interface PreflightCheck {
   id: string
   label: string
@@ -250,6 +270,10 @@ export interface CockpitApi {
   linkIssue(sessionId: string, ref: string): Promise<{ link?: GithubLink; error?: string }>
   unlinkIssue(sessionId: string): Promise<void>
   chooseDirectory(): Promise<string | null>
+  gitChanges(sessionId: string): Promise<GitChanges>
+  gitFileDiff(sessionId: string, path: string): Promise<string>
+  gitCommit(sessionId: string, message: string): Promise<GitCommitResult>
+  gitDiscard(sessionId: string, path: string): Promise<GitCommitResult>
   browserOpen(sessionId: string): Promise<void>
   browserClose(sessionId: string): Promise<void>
   browserNavigate(sessionId: string, url: string): Promise<void>

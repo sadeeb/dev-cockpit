@@ -3,8 +3,9 @@ import { writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { BrowserInputEvent, CockpitEvent, UiCommand } from '../shared/types'
 import { BrowserManager } from './browserManager'
-import { runDemo } from './demo'
+import { demoGitChanges, demoGitFileDiff, runDemo } from './demo'
 import { fixPath, preflight } from './env'
+import { gitChanges, gitCommit, gitDiscard, gitFileDiff } from './git'
 import { SessionManager } from './sessionManager'
 import { Store } from './store'
 
@@ -144,6 +145,24 @@ function registerIpc(): void {
         message: 'Choose the working directory for this session'
       })
       return res.canceled ? null : (res.filePaths[0] ?? null)
+    },
+    gitChanges: (id: string) => {
+      if (DEMO) return demoGitChanges()
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? gitChanges(dir) : { ok: false, error: 'unknown session', branch: '', files: [] }
+    },
+    gitFileDiff: (id: string, file: string) => {
+      if (DEMO) return demoGitFileDiff(file)
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? gitFileDiff(dir, file) : ''
+    },
+    gitCommit: (id: string, message: string) => {
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? gitCommit(dir, message) : { ok: false, error: 'unknown session' }
+    },
+    gitDiscard: (id: string, file: string) => {
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? gitDiscard(dir, file) : { ok: false, error: 'unknown session' }
     },
     browserOpen: async (id: string) => {
       try {
