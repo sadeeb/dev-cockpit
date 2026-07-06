@@ -23,8 +23,8 @@ import { findNode, getFixedPath } from './env'
 
 const COCKPIT_NOTE =
   'You are running inside Dev Cockpit, a desktop mission-control app that wraps Claude Code. ' +
-  'The user watches your work live: the conversation, your task list, tool activity, and — when browser tools ' +
-  '(mcp__playwright__*) are available — a shared live browser they can also drive. Keep the TodoWrite task list ' +
+  'The user watches your work live: the conversation, your task list, tool activity, and (when browser tools ' +
+  'mcp__playwright__* are available) a shared live browser they can also drive. Keep the TodoWrite task list ' +
   'up to date on multi-step work; it powers the mission-control board.'
 
 /** Async queue used as the streaming-input iterable for the SDK. */
@@ -79,7 +79,7 @@ export interface AgentCallbacks {
   requestPermission(req: PermissionRequest, signal: AbortSignal): Promise<PermissionDecision>
   /** Launch the session browser before a Playwright tool is allowed to run. */
   ensureBrowser(): Promise<void>
-  /** The user chose "always for this repo" — persist the rule. */
+  /** The user chose "always for this repo" - persist the rule. */
   persistAllow(toolName: string): void
 }
 
@@ -335,7 +335,7 @@ export class AgentSession {
         this.emit({
           t: 'banner',
           level: 'info',
-          text: `Auto-denied ${p.tool_name ?? 'tool'}${p.decision_reason ? ` — ${p.decision_reason}` : ''}`,
+          text: `Auto-denied ${p.tool_name ?? 'tool'}${p.decision_reason ? `: ${p.decision_reason}` : ''}`,
           ts: Date.now()
         })
         break
@@ -360,7 +360,7 @@ export class AgentSession {
       type: 'image',
       source: { type: 'base64', media_type: img.mediaType, data: img.data }
     }))
-    // the API rejects empty text blocks — images can travel alone
+    // the API rejects empty text blocks - images can travel alone
     if (text.trim() || content.length === 0) content.push({ type: 'text', text })
     this.input.push({
       type: 'user',

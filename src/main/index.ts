@@ -36,7 +36,7 @@ function broadcast(e: CockpitEvent): void {
 
 // ── attention: dock badge + native notifications ──────────────────────────────
 // The badge counts sessions that need a human; notifications only fire while
-// the window is unfocused — if you're looking at the app, you already know.
+// the window is unfocused - if you're looking at the app, you already know.
 
 const lastStatus = new Map<string, SessionStatus>()
 
@@ -59,7 +59,7 @@ function onStatusMaybeChanged(row: SessionRow): void {
   else if (row.status === 'done' && prev === 'running') title = 'Agent finished'
   if (!title) return
 
-  const n = new Notification({ title: `${title} — Dev Cockpit`, body: row.title, silent: row.status === 'done' })
+  const n = new Notification({ title: `${title} · Dev Cockpit`, body: row.title, silent: row.status === 'done' })
   n.on('click', () => {
     if (win) {
       if (win.isMinimized()) win.restore()
@@ -178,7 +178,7 @@ function registerIpc(): void {
         broadcast({
           kind: 'toast',
           level: 'error',
-          message: `Worktree failed (${wt.error ?? 'unknown'}) — using the repo directly.`
+          message: `Worktree failed (${wt.error ?? 'unknown'}) - using the repo directly.`
         })
       }
       return manager.createSession(opts)
@@ -237,7 +237,7 @@ function registerIpc(): void {
       return dir ? worktreeInfo(dir) : null
     },
     gitMergeBack: (id: string) => {
-      if (DEMO) return { ok: false, error: 'Demo mode — nothing to merge.' }
+      if (DEMO) return { ok: false, error: 'Demo mode - nothing to merge.' }
       const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
       return dir ? mergeWorktree(dir) : { ok: false, error: 'unknown session' }
     },

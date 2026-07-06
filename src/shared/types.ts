@@ -50,7 +50,7 @@ export interface PermissionRequest {
   title?: string
   description?: string
   displayName?: string
-  /** True when this is an ExitPlanMode approval — render the plan, offer plan actions */
+  /** True when this is an ExitPlanMode approval - render the plan, offer plan actions */
   isPlan: boolean
   plan?: string
   ts: number
@@ -297,7 +297,7 @@ export interface ModelChoice {
 
 export const MODEL_CHOICES: ModelChoice[] = [
   { id: null, label: 'Default', hint: 'Your Claude Code default model' },
-  { id: 'claude-fable-5', label: 'Fable', hint: 'Most capable — deep reasoning, long-horizon work (premium pricing)' },
+  { id: 'claude-fable-5', label: 'Fable', hint: 'Most capable. Deep reasoning and long-horizon work (premium pricing)' },
   { id: 'opus', label: 'Opus', hint: 'Highly capable, great default for hard work' },
   { id: 'sonnet', label: 'Sonnet', hint: 'Balanced speed and capability' },
   { id: 'haiku', label: 'Haiku', hint: 'Fastest, lightweight tasks' }
@@ -307,7 +307,7 @@ export const PERMISSION_MODES: { id: PermissionModeId; label: string; hint: stri
   { id: 'default', label: 'Ask before actions', hint: 'Approve risky tools as they happen (recommended)' },
   { id: 'acceptEdits', label: 'Auto-accept edits', hint: 'File edits run without asking; shell still asks' },
   { id: 'plan', label: 'Plan first', hint: 'Agent proposes a plan before touching anything' },
-  { id: 'bypassPermissions', label: 'Full auto', hint: 'Never asks. Trusts every tool — use with care', danger: true }
+  { id: 'bypassPermissions', label: 'Full auto', hint: 'Never asks. Trusts every tool, use with care', danger: true }
 ]
 
 // Renderer → main command surface (implemented over a single invoke channel).

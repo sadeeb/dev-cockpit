@@ -90,7 +90,7 @@ function IssueBadge({ row }: { row: SessionRow }): ReactNode {
     <span className={cx('issue-badge', link.state)}>
       <button
         className="issue-open"
-        title={`${link.repo}#${link.issueNumber} — open on GitHub`}
+        title={`${link.repo}#${link.issueNumber} · open on GitHub`}
         onClick={() => void window.cockpit.openExternal(link.url)}
       >
         {link.state === 'open' ? <CircleDot size={12} /> : <GitPullRequestArrow size={12} />}
@@ -190,7 +190,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
   useEffect(() => {
     const prev = prevPlan.current
     prevPlan.current = { id: row.id, done, total }
-    if (!prev || prev.id !== row.id) return // first sight of this session — just record
+    if (!prev || prev.id !== row.id) return // first sight of this session - just record
     if (total > 0 && done === total && !(prev.total === total && prev.done === total)) {
       setBurst((b) => b + 1)
     }
@@ -224,14 +224,14 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
           />
           <button
             className={cx('icon-btn', row.browserEnabled && 'active')}
-            title={row.browserEnabled ? 'Browser tools enabled — click to disable' : 'Enable browser tools (Playwright)'}
+            title={row.browserEnabled ? 'Browser tools enabled. Click to disable' : 'Enable browser tools (Playwright)'}
             onClick={() => store.toggleBrowser(row.id, !row.browserEnabled)}
           >
             <Globe size={15} />
           </button>
           <button
             className="icon-btn"
-            title="Fork this session — try a different approach from the same history"
+            title="Fork this session and try a different approach from the same history"
             onClick={() => void store.forkSession(row.id)}
           >
             <GitFork size={15} />

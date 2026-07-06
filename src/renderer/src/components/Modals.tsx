@@ -67,7 +67,7 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
   return (
     <ModalShell title="New session" onClose={() => store.closeModal()}>
       <label className="field">
-        <span>Working directory — the repo Claude works in</span>
+        <span>Working directory: the repo Claude works in</span>
         <div className="field-row">
           <input value={dir} placeholder="/path/to/your/project" onChange={(e) => setDir(e.target.value)} spellCheck={false} />
           <button className="btn" onClick={() => void pick()}>
@@ -103,14 +103,14 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
       <label className="field check">
         <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} />
         <span>
-          <Globe size={13} /> Enable the shared browser (Playwright) — the agent can drive your app while you watch
+          <Globe size={13} /> Enable the shared browser (Playwright) so the agent can drive your app while you watch
         </span>
       </label>
 
       <label className="field check">
         <input type="checkbox" checked={worktree} onChange={(e) => setWorktree(e.target.checked)} />
         <span>
-          <GitBranch size={13} /> Own branch + worktree — run sessions in the same repo without them trampling each
+          <GitBranch size={13} /> Own branch + worktree: run sessions in the same repo without them trampling each
           other; merge back when done
         </span>
       </label>
@@ -156,7 +156,7 @@ function SettingsModal({ state }: { state: AppState }): ReactNode {
         <span>Browser: allowed origins (optional, semicolon-separated)</span>
         <input
           value={origins}
-          placeholder="e.g. http://localhost:3000;http://127.0.0.1:5173 — empty allows all"
+          placeholder="e.g. http://localhost:3000;http://127.0.0.1:5173 (empty allows all)"
           onChange={(e) => setOrigins(e.target.value)}
           spellCheck={false}
         />
@@ -177,7 +177,7 @@ function SettingsModal({ state }: { state: AppState }): ReactNode {
 
       {(s?.permissionRules?.length ?? 0) > 0 && (
         <label className="field">
-          <span>Trusted tools — “always, for this repo” rules</span>
+          <span>Trusted tools: “always, for this repo” rules</span>
           <div className="rule-list">
             {s!.permissionRules.map((r, i) => (
               <span className="rule-chip" key={i} title={r.dir || 'everywhere'}>
@@ -242,7 +242,7 @@ function BrowserSafetyModal({ id }: { id: string }): ReactNode {
       <div className="safety">
         <TriangleAlert size={18} />
         <p>
-          Everything the agent sees through the browser — page content, console output, form data — is sent to the
+          Everything the agent sees through the browser (page content, console output, form data) is sent to the
           model API as it works. <b>Use development or test environments with test data only.</b>
         </p>
       </div>
@@ -254,7 +254,7 @@ function BrowserSafetyModal({ id }: { id: string }): ReactNode {
           Cancel
         </button>
         <button className="btn primary" onClick={() => void store.ackBrowserSafety(id)}>
-          I understand — enable
+          I understand, enable it
         </button>
       </div>
     </ModalShell>

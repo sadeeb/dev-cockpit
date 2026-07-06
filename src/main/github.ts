@@ -63,7 +63,7 @@ async function resolveViaGh(repo: string, num: number): Promise<ResolvedIssue | 
         }))
       }
     } catch {
-      // not an issue (maybe a PR) or gh failed — try next form
+      // not an issue (maybe a PR) or gh failed - try next form
     }
   }
   return null
@@ -144,7 +144,7 @@ export function buildIssueContext(issue: ResolvedIssue): string {
   if (issue.comments.length) {
     lines.push('', `Comments (latest ${issue.comments.length}):`)
     for (const c of issue.comments) {
-      lines.push(`— @${c.author}:`, clip(c.body, 1200), '')
+      lines.push(`> @${c.author}:`, clip(c.body, 1200), '')
     }
   }
   lines.push('</github-issue>')

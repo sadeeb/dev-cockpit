@@ -8,7 +8,7 @@ const SYSTEM = 'Return a 3-6 word title for the given coding request, sentence c
  * Title generation (spec §4): async, keyed off the raw first prompt, never
  * blocks the agent. Uses the Anthropic API directly when an API key exists;
  * otherwise falls back to a tiny one-shot Agent SDK call so subscription
- * (OAuth) users get titles too. Always resolves to *something* — the
+ * (OAuth) users get titles too. Always resolves to *something* - the
  * heuristic is the final fallback.
  */
 export async function generateTitle(prompt: string): Promise<string> {

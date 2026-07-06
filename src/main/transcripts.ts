@@ -6,7 +6,7 @@ import type { AssistantPart, ConvoEvent, TodoItem, ToolUseStart } from '../share
 /**
  * Claude Code keeps the canonical transcript as JSONL under
  * ~/.claude/projects/<munged-cwd>/<session-id>.jsonl. Per spec we don't store
- * transcripts ourselves — we replay CC's own file into conversation events so
+ * transcripts ourselves - we replay CC's own file into conversation events so
  * a reopened session shows its full history.
  */
 export function transcriptPath(cwd: string, claudeSessionId: string): string | null {
@@ -64,7 +64,7 @@ export function loadTranscriptEvents(cwd: string, claudeSessionId: string): Conv
     } catch {
       continue
     }
-    if (entry.isSidechain) continue // subagent internals — keep history compact
+    if (entry.isSidechain) continue // subagent internals - keep history compact
     if (entry.isMeta) continue
     const ts = entry.timestamp ? Date.parse(String(entry.timestamp)) || Date.now() : Date.now()
     const message = entry.message as Record<string, unknown> | undefined

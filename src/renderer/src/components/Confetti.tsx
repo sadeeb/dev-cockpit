@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
-/** A one-shot confetti burst — the cockpit celebrates a finished plan. */
+/** A one-shot confetti burst - the cockpit celebrates a finished plan. */
 
 const COLORS = ['#0072e3', '#ffb200', '#ff6100', '#00aa3c', '#ab54f7', '#ea3737']
 

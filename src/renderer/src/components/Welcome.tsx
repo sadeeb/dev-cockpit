@@ -28,7 +28,7 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
         </div>
         <h1>Dev Cockpit</h1>
         <p className="welcome-tag">
-          Your flight deck for Claude Code — run a squadron of sessions, wire in GitHub issues, and co-pilot a live
+          Your flight deck for Claude Code: run a squadron of sessions, wire in GitHub issues, and co-pilot a live
           browser with the agent. Strap in.
         </p>
 
@@ -40,7 +40,7 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
           <div className="tip">
             <Sparkles size={15} />
             <b>Auto-titled sessions</b>
-            <span>Your first prompt names the session instantly — edit anytime.</span>
+            <span>Your first prompt names the session instantly. Edit anytime.</span>
           </div>
           <div className="tip">
             <CircleDot size={15} />
@@ -55,7 +55,7 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
           <div className="tip">
             <MonitorPlay size={15} />
             <b>Co-piloted browser</b>
-            <span>The agent flies your app in an embedded browser — grab the stick anytime, and beam console logs into the chat.</span>
+            <span>The agent flies your app in an embedded browser. Grab the stick anytime and beam console logs into the chat.</span>
           </div>
         </div>
 

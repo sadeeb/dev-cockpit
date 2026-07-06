@@ -8,7 +8,7 @@ import type { BrowserManager } from './browserManager'
 import type { SessionManager } from './sessionManager'
 
 /**
- * COCKPIT_SMOKE=1 — scripted end-to-end check of the real bridge: creates a
+ * COCKPIT_SMOKE=1 - scripted end-to-end check of the real bridge: creates a
  * session in a temp dir, sends one tiny prompt to Haiku, and verifies that
  * streaming, the result, status flow, and async titling all happen.
  * Exits 0 on success, 1 on failure. Costs roughly nothing.
@@ -35,7 +35,7 @@ export function runSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent) =>
   const finish = (ok: boolean, reason: string): void => {
     if (done) return
     done = true
-    log(ok ? 'PASS' : 'FAIL', '—', reason)
+    log(ok ? 'PASS' : 'FAIL', '-', reason)
     log('assistant said:', JSON.stringify(sawAssistantText.slice(0, 120)))
     log('ai title:', JSON.stringify(sawTitle))
     setTimeout(() => app.exit(ok ? 0 : 1), 400)
@@ -65,12 +65,12 @@ export function runSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent) =>
     }
   })
 
-  void manager.sendPrompt(row.id, 'Reply with exactly the word: pong — no tools, no extra text.')
+  void manager.sendPrompt(row.id, 'Reply with exactly the word: pong - no tools, no extra text.')
   setTimeout(() => finish(false, 'timeout after 150s'), 150000)
 }
 
 /**
- * COCKPIT_FORK_SMOKE=1 — verifies session forking end-to-end with a real
+ * COCKPIT_FORK_SMOKE=1 - verifies session forking end-to-end with a real
  * agent: teach session A a word, fork it, and ask the fork what the word was.
  * Passes only if the fork answers from inherited history AND ends up with a
  * different Claude session id than the source. Costs ~2 tiny Haiku turns.
@@ -88,7 +88,7 @@ export function runForkSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent
   const finish = (ok: boolean, reason: string): void => {
     if (done) return
     done = true
-    log(ok ? 'PASS' : 'FAIL', '—', reason)
+    log(ok ? 'PASS' : 'FAIL', '-', reason)
     setTimeout(() => app.exit(ok ? 0 : 1), 400)
   }
 
@@ -102,7 +102,7 @@ export function runForkSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent
         if (!fork) return finish(false, 'forkSession returned null')
         forkId = fork.id
         log('forked →', fork.id, 'inherits claudeSessionId =', fork.claudeSessionId)
-        void manager.sendPrompt(fork.id, 'Reply with exactly the secret word I told you earlier — just the word.')
+        void manager.sendPrompt(fork.id, 'Reply with exactly the secret word I told you earlier - just the word.')
       }
     }
     if (forkId && e.sessionId === forkId) {
@@ -128,7 +128,7 @@ export function runForkSmoke(manager: SessionManager, tap: (cb: (e: CockpitEvent
 }
 
 /**
- * COCKPIT_BROWSER_SMOKE=1 — verifies the shared-browser plumbing without an
+ * COCKPIT_BROWSER_SMOKE=1 - verifies the shared-browser plumbing without an
  * agent: launches the per-session Chromium, waits for a CDP screencast frame,
  * then attaches a real Playwright MCP server over the same CDP endpoint and
  * drives one browser_navigate through it.
@@ -152,7 +152,7 @@ export function runBrowserSmoke(
   const finish = (ok: boolean, reason: string): void => {
     if (done) return
     done = true
-    log(ok ? 'PASS' : 'FAIL', '—', reason)
+    log(ok ? 'PASS' : 'FAIL', '-', reason)
     browsers.closeAll()
     setTimeout(() => app.exit(ok ? 0 : 1), 600)
   }

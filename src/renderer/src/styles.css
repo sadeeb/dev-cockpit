@@ -1,8 +1,8 @@
-/* ── Dev Cockpit design system — "toy blocks" (ref: units.gr) ──────────────────
+/* ── Dev Cockpit design system - "toy blocks" (ref: units.gr) ──────────────────
    Cream paper ground, near-black chunky type, flat blocks of saturated
    primaries (blue/yellow/orange/green/purple) doing the talking: numbered
    session cards, whole-card status fills, black pill buttons, ticker strips,
-   graph-paper backdrops. Code and console stay dark — terminal windows set
+   graph-paper backdrops. Code and console stay dark - terminal windows set
    into the paper. Flat, bold, and a little arcade. */
 
 :root {
@@ -136,7 +136,7 @@ input, textarea, select { font: inherit; color: inherit; }
   background: var(--paper); border-right: 1.5px solid var(--ink);
   display: flex; flex-direction: column;
 }
-/* Single dedicated window-drag strip. NEVER make content panes draggable —
+/* Single dedicated window-drag strip. NEVER make content panes draggable -
    on macOS a drag region swallows real mouse clicks on everything inside it
    (buttons included), even with no-drag overrides. This thin strip sits over
    the empty title-bar band only; interactive headers are lifted above it. */

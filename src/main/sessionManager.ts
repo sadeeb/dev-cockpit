@@ -98,7 +98,7 @@ export class SessionManager {
 
   /**
    * Branch a session: same repo/model/history, but the next turn continues in
-   * a *forked* Claude session — try a second approach without losing the first.
+   * a *forked* Claude session - try a second approach without losing the first.
    */
   forkSession(sessionId: string): SessionRow | null {
     const src = this.store.getSession(sessionId)
@@ -455,7 +455,7 @@ export class SessionManager {
     if (refs.length === 0) return { error: 'No issue reference found. Try #123, owner/repo#123, or a GitHub URL.' }
     const ref = refs[0]
     const repo = ref.repo ?? (await inferRepo(row.workingDir))
-    if (!repo) return { error: 'Could not infer the repository — use owner/repo#123 or a full URL.' }
+    if (!repo) return { error: 'Could not infer the repository. Use owner/repo#123 or a full URL.' }
     const issue = await resolveIssue(repo, ref.number)
     if (!issue) return { error: `Could not fetch ${repo}#${ref.number}. Check the number, or run \`gh auth login\` for private repos.` }
     const link = this.applyLink(sessionId, issue.repo, issue.number, issue.title, issue.state, issue.url, false)

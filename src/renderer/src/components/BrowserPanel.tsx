@@ -6,7 +6,7 @@ import { cx } from '../util'
 
 /**
  * Embedded live view of the session's shared browser: a CDP screencast the
- * human can click, scroll, and type into — the same headless Chromium the
+ * human can click, scroll, and type into - the same headless Chromium the
  * agent drives through the Playwright MCP. The console drawer below the
  * viewport captures logs/errors and can drop them straight into the chat.
  */
@@ -24,7 +24,7 @@ function ConsoleDrawer({ row, entries, url }: { row: SessionRow; entries: Consol
   const bodyRef = useRef<HTMLDivElement>(null)
   const errors = entries.filter((e) => e.level === 'error').length
 
-  // A new page error pops the drawer open — the cockpit's warning light.
+  // A new page error pops the drawer open - the cockpit's warning light.
   const prevErrors = useRef(0)
   useEffect(() => {
     if (errors > prevErrors.current) setOpen(true)
@@ -108,13 +108,13 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
     setInspectBusy(false)
     setInspecting(false)
     if (!hit) {
-      store.pushToast('error', 'Could not identify that element — is the page still loading?')
+      store.pushToast('error', 'Could not identify that element. Is the page still loading?')
       return
     }
     const label = hit.text ? ` ("${hit.text.slice(0, 60)}${hit.text.length > 60 ? '…' : ''}")` : ''
     store.insertIntoComposer(
       row.id,
-      `Looking at \`${hit.selector}\`${label} — screenshot attached:`,
+      `Looking at \`${hit.selector}\`${label} (screenshot attached):`,
       hit.shot ? [`data:${hit.shot.mediaType};base64,${hit.shot.data}`] : undefined
     )
   }
@@ -186,7 +186,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
         </form>
         <button
           className={cx('icon-btn', inspecting && 'active')}
-          title={inspecting ? 'Cancel point-at-element' : 'Point at an element — click it in the preview to drop it into the chat'}
+          title={inspecting ? 'Cancel point-at-element' : 'Point at an element: click it in the preview to drop it into the chat'}
           disabled={!frame}
           onClick={() => setInspecting(!inspecting)}
         >
@@ -263,7 +263,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
               <>
                 <Globe size={22} className="dim" />
                 <p>
-                  You and the agent fly this browser together — it lives right here, no extra window. It wakes up when
+                  You and the agent fly this browser together. It lives right here, no extra window, and wakes up when
                   the agent reaches for a browser tool, or hit the power button.
                 </p>
                 <p className="dim small">Heads-up: pages the agent sees are sent to the model. Use dev/test data only.</p>
@@ -274,7 +274,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
       </div>
       <ConsoleDrawer row={row} entries={b?.console ?? []} url={b?.url ?? ''} />
       <div className="browser-foot">
-        Click, scroll, type — this viewport <em>is</em> the browser. Console lines click straight into the chat.
+        Click, scroll, type: this viewport <em>is</em> the browser. Console lines click straight into the chat.
       </div>
     </aside>
   )

@@ -578,7 +578,7 @@ class CockpitStore {
       this.pushToast('error', 'Could not fork this session')
       return
     }
-    this.pushToast('info', 'Forked — this copy continues from the same history')
+    this.pushToast('info', 'Forked. This copy continues from the same history')
     this.selectSession(row.id)
   }
 

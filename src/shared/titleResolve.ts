@@ -2,10 +2,10 @@ import type { GithubLink, TitleSource } from './types'
 
 /**
  * Title precedence, highest wins (spec §5):
- *   1. manual  — the user's text
- *   2. issue   — `#142 · Login redirect loops on Safari`
- *   3. ai      — generated from the first prompt
- *   4. default — `Untitled session`
+ *   1. manual  - the user's text
+ *   2. issue   - `#142 · Login redirect loops on Safari`
+ *   3. ai      - generated from the first prompt
+ *   4. default - `Untitled session`
  *
  * Returns the new {title, source} for a proposed update, or null when the
  * existing title outranks the proposal and must be kept.

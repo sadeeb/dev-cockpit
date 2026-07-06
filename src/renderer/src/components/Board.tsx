@@ -6,7 +6,7 @@ import { baseName, cx, fmtCost, timeAgo } from '../util'
 
 /**
  * Mission control (spec §6): a pure projection over each session's event
- * stream — status, live checklist, tool ticker, browser thumbnail. Because it
+ * stream - status, live checklist, tool ticker, browser thumbnail. Because it
  * reads the same stream the agent produces, it can't misreport what happened.
  */
 
@@ -157,7 +157,7 @@ function CostSpark({ state }: { state: AppState }): ReactNode {
           <span
             key={i}
             className={cx('spark-bar', SPARK_COLORS[i % SPARK_COLORS.length])}
-            title={`${c.title} — ${fmtCost(c.cost)}`}
+            title={`${c.title}: ${fmtCost(c.cost)}`}
             style={{ height: `${Math.max(12, (c.cost / max) * 100)}%` }}
           />
         ))}

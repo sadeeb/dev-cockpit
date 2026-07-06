@@ -84,8 +84,8 @@ function demoFrame(): string {
 
 /**
  * Demo seeder (COCKPIT_DEMO=1): populates an in-memory store with three
- * sessions and replays a scripted stream so the UI can be exercised — and
- * screenshotted — without burning agent tokens.
+ * sessions and replays a scripted stream so the UI can be exercised - and
+ * screenshotted - without burning agent tokens.
  */
 export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): void {
   const a = store.createSession({
@@ -115,8 +115,8 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   const convo = (sessionId: string, ev: ConvoEvent): void => broadcast({ kind: 'convo', sessionId, ev })
   const now = Date.now()
 
-  // Session A — mid-flight with todos, tools, and streaming text
-  convo(a.id, { t: 'user', text: 'Fix #142 — login redirect loops forever on Safari. Repro: log in from /pricing, Safari 17.', ts: now - 95000 })
+  // Session A - mid-flight with todos, tools, and streaming text
+  convo(a.id, { t: 'user', text: 'Fix #142: login redirect loops forever on Safari. Repro: log in from /pricing, Safari 17.', ts: now - 95000 })
   convo(a.id, { t: 'issue-context', repo: 'acme/acme-web', issueNumber: 142, ts: now - 94000 })
   convo(a.id, { t: 'turn-start', ts: now - 93000 })
   const demoTodos = [
@@ -128,7 +128,7 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   ]
   convo(a.id, {
     t: 'assistant', id: 'demo-a1', chain: null,
-    parts: [{ type: 'text', text: 'Reading the issue, this smells like a cookie `SameSite` problem — Safari drops the session cookie on the cross-site redirect back from the auth provider. Let me confirm in the auth middleware.' }],
+    parts: [{ type: 'text', text: 'Reading the issue, this smells like a cookie `SameSite` problem. Safari drops the session cookie on the cross-site redirect back from the auth provider. Let me confirm in the auth middleware.' }],
     toolUses: [{ id: 'tool-todo-1', name: 'TodoWrite', input: { todos: demoTodos } }],
     ts: now - 90000
   })
@@ -142,7 +142,7 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   convo(a.id, { t: 'tool-result', toolUseId: 'tool-read-1', ok: true, content: 'export function sessionCookie(res: Response) {\n  res.cookie("acme_session", token, {\n    httpOnly: true,\n    sameSite: "strict",\n    secure: true,\n  })\n}', ts: now - 79000 })
   convo(a.id, {
     t: 'assistant', id: 'demo-a3', chain: null,
-    parts: [{ type: 'text', text: 'Found it — `sameSite: "strict"` drops the cookie on the OAuth callback redirect. Switching to `lax`, which still protects POSTs but survives top-level navigations.' }],
+    parts: [{ type: 'text', text: 'Found it: `sameSite: "strict"` drops the cookie on the OAuth callback redirect. Switching to `lax`, which still protects POSTs but survives top-level navigations.' }],
     toolUses: [{
       id: 'tool-edit-1', name: 'Edit',
       input: {
@@ -173,17 +173,17 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   const browser = (ev: BrowserEvent): void => broadcast({ kind: 'browser', sessionId: a.id, ev })
   browser({
     t: 'state', running: true, url: 'http://localhost:3000/pricing',
-    tabs: [{ id: 'demo-tab', title: 'Pricing — Acme', url: 'http://localhost:3000/pricing' }],
+    tabs: [{ id: 'demo-tab', title: 'Pricing · Acme', url: 'http://localhost:3000/pricing' }],
     activeTabId: 'demo-tab'
   })
   browser({ t: 'frame', dataUrl: demoFrame(), w: 1100, h: 800 })
   browser({ t: 'console', entry: { id: 1, level: 'info', source: 'console', text: '[HMR] connected', url: 'http://localhost:3000/_next/static/chunks/webpack.js', line: 214, ts: now - 27000 } })
   browser({ t: 'console', entry: { id: 2, level: 'log', source: 'console', text: 'auth: restoring session from cookie acme_session', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 88, ts: now - 26000 } })
-  browser({ t: 'console', entry: { id: 3, level: 'warn', source: 'console', text: 'auth: cookie missing on callback — retrying redirect (attempt 3)', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 131, ts: now - 25000 } })
+  browser({ t: 'console', entry: { id: 3, level: 'warn', source: 'console', text: 'auth: cookie missing on callback, retrying redirect (attempt 3)', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 131, ts: now - 25000 } })
   browser({ t: 'console', entry: { id: 4, level: 'error', source: 'exception', text: 'Error: redirect loop detected: /login → /pricing → /login\n    at guard (auth.js:142:11)', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 142, ts: now - 24000 } })
-  browser({ t: 'console', entry: { id: 5, level: 'error', source: 'network', text: 'Failed to load resource: the server responded with a status of 401 (Unauthorized) — /api/session', url: 'http://localhost:3000/api/session', ts: now - 23000 } })
+  browser({ t: 'console', entry: { id: 5, level: 'error', source: 'network', text: 'Failed to load resource: the server responded with a status of 401 (Unauthorized): /api/session', url: 'http://localhost:3000/api/session', ts: now - 23000 } })
 
-  // Session B — waiting on a permission
+  // Session B - waiting on a permission
   convo(b.id, { t: 'user', text: 'Add a CSV export button to the monthly report page. Stream the download, don\'t buffer the whole file.', ts: now - 200000 })
   convo(b.id, { t: 'turn-start', ts: now - 199000 })
   convo(b.id, {
@@ -203,19 +203,19 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
     }
   })
 
-  // Session C — finished turn
+  // Session C - finished turn
   convo(c.id, { t: 'user', text: 'Move CLI settings from scattered JSON files into a single ~/.config/devtools/config.toml with migration.', ts: now - 1000000 })
   convo(c.id, { t: 'turn-start', ts: now - 999000 })
   convo(c.id, {
     t: 'assistant', id: 'demo-c1', chain: null,
-    parts: [{ type: 'text', text: 'Done. Consolidated 4 JSON files into `config.toml`, added a one-shot migration on first run, and kept a `--legacy-config` escape hatch.\n\n- `src/config.rs` — new TOML loader with serde\n- `src/migrate.rs` — copies old values, backs up originals\n- tests cover fresh installs and both migration paths' }],
+    parts: [{ type: 'text', text: 'Done. Consolidated 4 JSON files into `config.toml`, added a one-shot migration on first run, and kept a `--legacy-config` escape hatch.\n\n- `src/config.rs`: new TOML loader with serde\n- `src/migrate.rs`: copies old values, backs up originals\n- tests cover fresh installs and both migration paths' }],
     toolUses: [],
     ts: now - 940000
   })
   convo(c.id, { t: 'turn-end', ts: now - 935000, stats: { ok: true, costUsd: 0.0455, durationMs: 64000, numTurns: 9, inputTokens: 48211, outputTokens: 3120 } })
   store.updateSession(c.id, { status: 'done' })
 
-  // COCKPIT_DEMO_VIEW=session:0+confetti — complete the plan after a beat so
+  // COCKPIT_DEMO_VIEW=session:0+confetti - complete the plan after a beat so
   // the confetti burst can be watched (and screenshotted) for free.
   if (process.env.COCKPIT_DEMO_VIEW?.includes('confetti')) {
     setTimeout(() => {

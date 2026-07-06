@@ -43,14 +43,14 @@ export function PermissionCard({
               className="btn primary"
               onClick={() => respond({ behavior: 'allow', setMode: 'acceptEdits' })}
             >
-              Approve — auto-accept edits
+              Approve and auto-accept edits
             </button>
             <button className="btn" onClick={() => respond({ behavior: 'allow', setMode: 'default' })}>
-              Approve — ask as it goes
+              Approve, ask as it goes
             </button>
             <button
               className="btn subtle"
-              onClick={() => respond({ behavior: 'deny', message: 'Keep planning — the user wants changes to the plan.' })}
+              onClick={() => respond({ behavior: 'deny', message: 'Keep planning. The user wants changes to the plan.' })}
             >
               Keep planning
             </button>
@@ -79,7 +79,7 @@ export function PermissionCard({
           </button>
           <button
             className="btn"
-            title="Persists across sessions and restarts — manage in Settings"
+            title="Persists across sessions and restarts. Manage in Settings"
             onClick={() => respond({ behavior: 'allow', alwaysForRepo: true })}
           >
             Always, for this repo

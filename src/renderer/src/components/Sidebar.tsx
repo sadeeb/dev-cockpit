@@ -4,7 +4,7 @@ import type { SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
 import { baseName, cx, timeAgo } from '../util'
 
-/** Sessions are numbered color blocks, units.gr-rail style — the color is the session's identity. */
+/** Sessions are numbered color blocks, units.gr-rail style - the color is the session's identity. */
 const CARD_COLORS = ['c-blue', 'c-yellow', 'c-orange', 'c-green', 'c-purple']
 
 function SessionItem({ row, index, active }: { row: SessionRow; index: number; active: boolean }): ReactNode {
@@ -98,7 +98,7 @@ export function Sidebar({ state }: { state: AppState }): ReactNode {
           Settings
         </button>
         {state.preflight && state.preflight.some((c) => !c.ok) && (
-          <span className="preflight-warn" title="Some checks failed — see Settings">
+          <span className="preflight-warn" title="Some checks failed. See Settings">
             !
           </span>
         )}

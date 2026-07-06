@@ -32,7 +32,7 @@ export const Markdown = memo(function Markdown({ text }: { text: string }) {
       try {
         hljs.highlightElement(el)
       } catch {
-        /* unknown language — leave as plain text */
+        /* unknown language - leave as plain text */
       }
     }
   }, [text])

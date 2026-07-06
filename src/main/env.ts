@@ -162,13 +162,13 @@ export async function preflight(chromePath?: string): Promise<PreflightCheck[]> 
       label: 'Node.js runtime',
       ok: !!node,
       detail: node ?? 'Not found on PATH',
-      hint: node ? undefined : 'Install Node.js 18+ (https://nodejs.org) — the agent engine runs on it.'
+      hint: node ? undefined : 'Install Node.js 18+ (https://nodejs.org). The agent engine runs on it.'
     },
     {
       id: 'gh',
       label: 'GitHub CLI (issue linking)',
       ok: !!gh,
-      detail: gh ?? 'Not found — will fall back to the public GitHub API',
+      detail: gh ?? 'Not found, falling back to the public GitHub API',
       hint: gh ? undefined : 'Optional: `brew install gh && gh auth login` for private repos and higher rate limits.'
     },
     {

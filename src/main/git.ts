@@ -50,14 +50,14 @@ export async function gitChanges(dir: string): Promise<GitChanges> {
       let additions = c?.add ?? 0
       const deletions = c?.del ?? 0
       if (xy === '??' && !c) {
-        // untracked files aren't in `diff HEAD` — count their lines directly
+        // untracked files aren't in `diff HEAD` - count their lines directly
         try {
           const st = statSync(path.join(dir, file))
           if (st.isFile() && st.size < 2 * 1024 * 1024) {
             additions = Number((await noIndexNumstat(dir, file)).split('\t')[0]) || 0
           }
         } catch {
-          /* directory or unreadable — leave 0 */
+          /* directory or unreadable - leave 0 */
         }
       }
       files.push({ path: file, status: statusOf(xy), additions, deletions })
@@ -67,7 +67,7 @@ export async function gitChanges(dir: string): Promise<GitChanges> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     const friendly = /not a git repository/i.test(msg)
-      ? 'Not a git repository — initialize one to track the agent’s changes.'
+      ? 'Not a git repository. Initialize one to track the agent’s changes.'
       : msg.split('\n')[0]
     return { ok: false, error: friendly, branch: '', files: [] }
   }
@@ -138,7 +138,7 @@ export async function createWorktree(
   try {
     await git(repoDir, ['rev-parse', '--git-dir'])
   } catch {
-    return { ok: false, error: 'Not a git repository — worktree sessions need one.' }
+    return { ok: false, error: 'Not a git repository, and worktree sessions need one.' }
   }
   try {
     const stamp = new Date().toISOString().slice(2, 10).replace(/-/g, '')
@@ -172,7 +172,7 @@ export async function mergeWorktree(dir: string): Promise<GitCommitResult> {
       return { ok: false, error: 'Commit this session’s changes first (Changes panel → Commit all).' }
     }
     if ((await git(info.baseDir, ['status', '--porcelain'])).trim()) {
-      return { ok: false, error: 'The base repo has uncommitted changes — clean it up before merging.' }
+      return { ok: false, error: 'The base repo has uncommitted changes. Clean it up before merging.' }
     }
     await git(info.baseDir, ['merge', '--no-edit', info.branch])
     const hash = (await git(info.baseDir, ['rev-parse', '--short', 'HEAD'])).trim()
@@ -183,7 +183,7 @@ export async function mergeWorktree(dir: string): Promise<GitCommitResult> {
     return {
       ok: false,
       error: conflict
-        ? 'Merge conflict — resolve it in the base repo (the merge was left in progress there).'
+        ? 'Merge conflict. Resolve it in the base repo (the merge was left in progress there).'
         : (msg.split('\n').find((l) => l.trim()) ?? 'merge failed')
     }
   }

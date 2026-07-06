@@ -16,7 +16,7 @@ import { store, type AppState } from '../store'
 import { baseName, cx } from '../util'
 
 /**
- * ⌘K command palette: jump anywhere, toggle any panel, start anything —
+ * ⌘K command palette: jump anywhere, toggle any panel, start anything -
  * the keyboard-first lane through mission control.
  */
 

@@ -16,7 +16,7 @@ import { findChrome, findNode, getFixedPath } from './env'
 /**
  * The shared-browser upgrade (spec §7): one Chromium per session, launched
  * headless with remote debugging. The Playwright MCP attaches to the same
- * instance over CDP, and we screencast it into mission control — so the human
+ * instance over CDP, and we screencast it into mission control - so the human
  * and the agent literally share one browser surface, entirely inside the app
  * (no separate desktop window). Console output, JS exceptions, and failed
  * network requests are captured over CDP so they can be sent to the agent.
@@ -93,7 +93,7 @@ export class BrowserManager {
     const proc = spawn(
       chrome,
       [
-        // Headless: the embedded panel is the only browser surface — no
+        // Headless: the embedded panel is the only browser surface - no
         // separate desktop window competing with the app for attention.
         '--headless=new',
         `--remote-debugging-port=${port}`,
@@ -255,7 +255,7 @@ export class BrowserManager {
       const p = params as {
         entry: { source: string; level: string; text: string; url?: string; lineNumber?: number }
       }
-      // Runtime.* already covers console calls and JS errors — only take the
+      // Runtime.* already covers console calls and JS errors - only take the
       // network channel here (failed requests, 4xx/5xx, CORS, mixed content).
       if (p.entry.source !== 'network') return
       this.pushConsole(sessionId, lb, {
@@ -371,7 +371,7 @@ export class BrowserManager {
 
   /**
    * Point-at-element: resolve what's under the (normalized) cursor, build a
-   * readable selector, and crop a screenshot around it — so the human can say
+   * readable selector, and crop a screenshot around it - so the human can say
    * "this thing" to the agent instead of describing DOM by hand.
    */
   async inspect(sessionId: string, nx: number, ny: number): Promise<InspectResult | null> {
@@ -473,7 +473,7 @@ export class BrowserManager {
   async mcpServerConfig(sessionId: string, allowedOrigins: string): Promise<Record<string, unknown>> {
     const port = await this.reservePort(sessionId)
     const node = await findNode()
-    // cli.js is not in the package's exports map — resolve it next to the entry.
+    // cli.js is not in the package's exports map - resolve it next to the entry.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const cli = path.join(path.dirname(require.resolve('@playwright/mcp/package.json')), 'cli.js')
     const args = [cli, '--cdp-endpoint', `http://127.0.0.1:${port}`]

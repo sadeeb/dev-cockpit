@@ -6,7 +6,7 @@ import { getFixedPath } from './env'
 /**
  * Session-owned background processes (dev servers, watchers): the cockpit
  * spawns them, tails their output into the process drawer, and the lines can
- * be clicked straight into the chat — the console drawer's sibling, for the
+ * be clicked straight into the chat - the console drawer's sibling, for the
  * server side of the app.
  */
 
@@ -76,7 +76,7 @@ export class ProcessManager {
     const cmd = command.trim()
     if (!cmd) return { error: 'Empty command' }
     if ([...this.procs(sessionId).values()].filter((p) => p.info.running).length >= 5) {
-      return { error: 'Five processes are already running in this session — stop one first.' }
+      return { error: 'Five processes are already running in this session - stop one first.' }
     }
     const id = randomUUID().slice(0, 8)
     const info: ProcInfo = { id, command: cmd, running: true, exitCode: null, startedAt: Date.now() }
@@ -102,13 +102,13 @@ export class ProcessManager {
       live.info.running = false
       live.info.exitCode = code
       live.proc = null
-      this.pushLine(sessionId, id, `— exited ${signal ? `(${signal})` : `with code ${code ?? 0}`}`)
+      this.pushLine(sessionId, id, `· exited ${signal ? `(${signal})` : `with code ${code ?? 0}`}`)
       this.emitProcs(sessionId)
     })
     proc.on('error', (e) => {
       live.info.running = false
       live.proc = null
-      this.pushLine(sessionId, id, `— failed to start: ${e.message}`)
+      this.pushLine(sessionId, id, `· failed to start: ${e.message}`)
       this.emitProcs(sessionId)
     })
 

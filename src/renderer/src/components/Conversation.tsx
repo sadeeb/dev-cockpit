@@ -127,7 +127,7 @@ export function Conversation({ convo, row }: { convo: ConvoState; row: SessionRo
             <div className="convo-empty">
               <p className="convo-empty-title">{row.title === 'Untitled session' ? 'Fresh session' : row.title}</p>
               <p>
-                Describe what to build or fix. Paste a GitHub issue URL — or <code>#123</code> — to link it; the agent
+                Describe what to build or fix. Paste a GitHub issue URL (or <code>#123</code>) to link it; the agent
                 starts with the issue context already loaded.
               </p>
               <p className="dim">Working in {row.workingDir}</p>

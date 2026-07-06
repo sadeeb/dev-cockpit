@@ -86,7 +86,7 @@ export function ProcessPanel({ state, row }: { state: AppState; row: SessionRow 
                   <Square size={9} fill="currentColor" />
                 </button>
               ) : (
-                <em>exit {p.exitCode ?? '—'}</em>
+                <em>exit {p.exitCode ?? '?'}</em>
               )}
             </span>
           ))}
@@ -96,7 +96,7 @@ export function ProcessPanel({ state, row }: { state: AppState; row: SessionRow 
       <div className="proc-body" ref={bodyRef}>
         {ui.lines.length === 0 && (
           <div className="proc-empty">
-            Run your dev server here — output streams live, crashes click straight into the chat.
+            Run your dev server here. Output streams live, and crashes click straight into the chat.
           </div>
         )}
         {ui.lines.map((l) => (
