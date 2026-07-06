@@ -1,0 +1,27 @@
+appId: dev.cockpit.app
+productName: Dev Cockpit
+directories:
+  buildResources: build
+  output: dist
+
+# The main process externalizes its deps (electron-vite), and both the Claude
+# Agent SDK and @playwright/mcp spawn real files from node_modules as child
+# processes — asar would hide those, so ship unpacked. It's a dev tool; size
+# is not the constraint.
+asar: false
+
+files:
+  - out/**
+  - build/icon.icns
+  - "!**/.DS_Store"
+
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.icns
+  target:
+    - target: dir
+      arch: arm64
+  # unsigned local build — no Developer ID on this machine
+  identity: null
+
+npmRebuild: false
