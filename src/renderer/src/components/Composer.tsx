@@ -32,7 +32,15 @@ export function TodoStrip({ convo }: { convo: ConvoState }): ReactNode {
   )
 }
 
-export function Composer({ row, convo }: { row: SessionRow; convo: ConvoState }): ReactNode {
+export function Composer({
+  row,
+  convo,
+  insert
+}: {
+  row: SessionRow
+  convo: ConvoState
+  insert?: { text: string; nonce: number }
+}): ReactNode {
   const [text, setText] = useState('')
   const ref = useRef<HTMLTextAreaElement>(null)
   const sendOnEnter = store.state.settings?.sendOnEnter ?? true
@@ -41,6 +49,15 @@ export function Composer({ row, convo }: { row: SessionRow; convo: ConvoState })
   useEffect(() => {
     ref.current?.focus()
   }, [row.id])
+
+  // Panels (e.g. the browser console) drop text in; the user adds words and sends.
+  const lastInsert = useRef(0)
+  useEffect(() => {
+    if (!insert || insert.nonce === lastInsert.current) return
+    lastInsert.current = insert.nonce
+    setText((t) => (t.trim() ? `${t.replace(/\s+$/, '')}\n\n${insert.text}` : insert.text))
+    ref.current?.focus()
+  }, [insert])
 
   useEffect(() => {
     const el = ref.current

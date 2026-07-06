@@ -89,6 +89,7 @@ export function runBrowserSmoke(
   })
 
   let gotFrame = false
+  let gotConsole = false
   let done = false
   const finish = (ok: boolean, reason: string): void => {
     if (done) return
@@ -104,6 +105,9 @@ export function runBrowserSmoke(
         gotFrame = true
         log('screencast frame received', e.ev.w, 'x', e.ev.h)
         void mcpAttachCheck()
+      } else if (e.ev.t === 'console' && e.ev.entry.text.includes('cockpit-console-check')) {
+        gotConsole = true
+        log('console captured:', e.ev.entry.level, JSON.stringify(e.ev.entry.text))
       } else if (e.ev.t === 'state' && e.ev.error) {
         finish(false, e.ev.error)
       }
@@ -137,13 +141,29 @@ export function runBrowserSmoke(
             send({ jsonrpc: '2.0', method: 'notifications/initialized' })
             send({
               jsonrpc: '2.0', id: 2, method: 'tools/call',
-              params: { name: 'browser_navigate', arguments: { url: 'data:text/html,<title>cockpit</title><h1>shared browser ok</h1>' } }
+              params: {
+                name: 'browser_navigate',
+                arguments: {
+                  url: 'data:text/html,<title>cockpit</title><h1>shared browser ok</h1><script>console.log("cockpit-console-check")</script>'
+                }
+              }
             })
           } else if (m.id === 2) {
-            const ok = !m.error && !(m.result?.isError)
-            log('browser_navigate via MCP over CDP:', ok ? 'ok' : JSON.stringify(m).slice(0, 300))
+            const navOk = !m.error && !(m.result?.isError)
+            log('browser_navigate via MCP over CDP:', navOk ? 'ok' : JSON.stringify(m).slice(0, 300))
             proc.kill()
-            finish(ok, ok ? 'frame + MCP attach both work' : 'MCP navigate failed')
+            if (!navOk) return finish(false, 'MCP navigate failed')
+            // console.log from the navigated page should stream in via CDP
+            const deadline = Date.now() + 8000
+            const poll = setInterval(() => {
+              if (gotConsole) {
+                clearInterval(poll)
+                finish(true, 'frame + MCP attach + console capture all work')
+              } else if (Date.now() > deadline) {
+                clearInterval(poll)
+                finish(false, 'navigate ok but no console event captured')
+              }
+            }, 200)
           }
         } catch {
           /* partial line */

@@ -4,6 +4,7 @@ import type {
   BrowserEvent,
   BrowserTab,
   CockpitEvent,
+  ConsoleEntry,
   ConvoEvent,
   CreateSessionOpts,
   GithubLink,
@@ -63,6 +64,7 @@ export interface BrowserUiState {
   activeTabId: string | null
   error: string | null
   frame: { dataUrl: string; w: number; h: number } | null
+  console: ConsoleEntry[]
 }
 
 export interface Toast {
@@ -89,6 +91,8 @@ export interface AppState {
   browsers: Record<string, BrowserUiState>
   browserPanel: Record<string, boolean>
   drawer: Record<string, boolean>
+  /** Text a panel wants appended to a session's composer (nonce marks each request). */
+  composerInsert: Record<string, { text: string; nonce: number }>
   settings: Settings | null
   preflight: PreflightCheck[] | null
   toasts: Toast[]
@@ -116,7 +120,8 @@ const emptyBrowser = (): BrowserUiState => ({
   tabs: [],
   activeTabId: null,
   error: null,
-  frame: null
+  frame: null,
+  console: []
 })
 
 let keyCounter = 0
@@ -287,6 +292,7 @@ class CockpitStore {
     browsers: {},
     browserPanel: {},
     drawer: {},
+    composerInsert: {},
     settings: null,
     preflight: null,
     toasts: [],
@@ -422,6 +428,12 @@ class CockpitStore {
     let next: BrowserUiState
     if (ev.t === 'frame') {
       next = { ...cur, frame: { dataUrl: ev.dataUrl, w: ev.w, h: ev.h } }
+    } else if (ev.t === 'console') {
+      const buf = [...cur.console, ev.entry]
+      if (buf.length > 300) buf.splice(0, buf.length - 300)
+      next = { ...cur, console: buf }
+    } else if (ev.t === 'console-clear') {
+      next = { ...cur, console: [] }
     } else {
       next = {
         ...cur,
@@ -569,6 +581,20 @@ class CockpitStore {
 
   setDrawer(id: string, open: boolean): void {
     this.state.drawer = { ...this.state.drawer, [id]: open }
+    this.commit()
+  }
+
+  /** Drop text into the session's composer so the user can add words and send. */
+  insertIntoComposer(id: string, text: string): void {
+    const nonce = (this.state.composerInsert[id]?.nonce ?? 0) + 1
+    this.state.composerInsert = { ...this.state.composerInsert, [id]: { text, nonce } }
+    this.commit()
+  }
+
+  clearConsole(id: string): void {
+    const cur = this.state.browsers[id]
+    if (!cur) return
+    this.state.browsers = { ...this.state.browsers, [id]: { ...cur, console: [] } }
     this.commit()
   }
 

@@ -1,39 +1,44 @@
-import { LayoutGrid, Plus, Settings, Trash2 } from 'lucide-react'
+import { ArrowUpRight, LayoutGrid, Plus, Settings, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
 import { baseName, cx, timeAgo } from '../util'
 
-function SessionItem({ row, active }: { row: SessionRow; active: boolean }): ReactNode {
+/** Sessions are numbered color blocks, units.gr-rail style — the color is the session's identity. */
+const CARD_COLORS = ['c-blue', 'c-yellow', 'c-orange', 'c-green', 'c-purple']
+
+function SessionItem({ row, index, active }: { row: SessionRow; index: number; active: boolean }): ReactNode {
   return (
     <div
-      className={cx('side-item', active && 'active')}
+      className={cx('side-card', CARD_COLORS[index % CARD_COLORS.length], active && 'active')}
       role="button"
       tabIndex={0}
       onClick={() => store.selectSession(row.id)}
       onKeyDown={(e) => e.key === 'Enter' && store.selectSession(row.id)}
     >
-      <span className={cx('side-dot', row.status)} />
-      <div className="side-item-main">
-        <div className="side-title" title={row.title}>
-          {row.title}
-        </div>
-        <div className="side-sub">
-          {row.link && <span className="side-issue">#{row.link.issueNumber}</span>}
-          <span>{baseName(row.workingDir)}</span>
-          <span className="side-time">{timeAgo(row.updatedAt)}</span>
-        </div>
+      <div className="side-card-top">
+        <span className="side-num">{String(index + 1).padStart(2, '0')}</span>
+        <span className={cx('side-dot', row.status)} />
+        <button
+          className="side-delete"
+          title="Delete session"
+          onClick={(e) => {
+            e.stopPropagation()
+            store.openModal({ m: 'delete-session', id: row.id })
+          }}
+        >
+          <Trash2 size={12} />
+        </button>
+        <ArrowUpRight size={14} className="side-arrow" />
       </div>
-      <button
-        className="side-delete"
-        title="Delete session"
-        onClick={(e) => {
-          e.stopPropagation()
-          store.openModal({ m: 'delete-session', id: row.id })
-        }}
-      >
-        <Trash2 size={13} />
-      </button>
+      <div className="side-card-title" title={row.title}>
+        {row.title}
+      </div>
+      <div className="side-card-sub">
+        {row.link && <span className="side-issue">#{row.link.issueNumber}</span>}
+        <span>{baseName(row.workingDir)}</span>
+        <span className="side-time">{timeAgo(row.updatedAt)}</span>
+      </div>
     </div>
   )
 }
@@ -74,8 +79,8 @@ export function Sidebar({ state }: { state: AppState }): ReactNode {
       </div>
 
       <div className="side-list">
-        {state.sessions.map((s) => (
-          <SessionItem key={s.id} row={s} active={s.id === activeId} />
+        {state.sessions.map((s, i) => (
+          <SessionItem key={s.id} row={s} index={i} active={s.id === activeId} />
         ))}
         {state.sessions.length === 0 && (
           <div className="side-empty">

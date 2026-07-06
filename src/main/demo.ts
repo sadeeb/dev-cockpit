@@ -1,5 +1,30 @@
-import type { CockpitEvent, ConvoEvent } from '../shared/types'
+import type { BrowserEvent, CockpitEvent, ConvoEvent } from '../shared/types'
 import { Store } from './store'
+
+/** A fake screencast frame (mock pricing page) so the browser panel renders without Chromium. */
+function demoFrame(): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="800">
+  <rect width="1100" height="800" fill="#ffffff"/>
+  <rect width="1100" height="64" fill="#111827"/>
+  <text x="32" y="40" font-family="sans-serif" font-size="20" font-weight="bold" fill="#ffffff">acme</text>
+  <text x="980" y="40" font-family="sans-serif" font-size="14" fill="#93c5fd">Log in</text>
+  <text x="550" y="150" font-family="sans-serif" font-size="34" font-weight="bold" fill="#111827" text-anchor="middle">Simple pricing</text>
+  <g font-family="sans-serif">
+    <rect x="70" y="220" width="290" height="380" rx="14" fill="#f9fafb" stroke="#e5e7eb"/>
+    <text x="215" y="270" font-size="18" font-weight="bold" fill="#111827" text-anchor="middle">Starter</text>
+    <text x="215" y="330" font-size="34" font-weight="bold" fill="#111827" text-anchor="middle">$0</text>
+    <rect x="405" y="200" width="290" height="420" rx="14" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+    <text x="550" y="250" font-size="18" font-weight="bold" fill="#111827" text-anchor="middle">Pro</text>
+    <text x="550" y="315" font-size="34" font-weight="bold" fill="#111827" text-anchor="middle">$24</text>
+    <rect x="455" y="545" width="190" height="44" rx="8" fill="#2563eb"/>
+    <text x="550" y="573" font-size="15" fill="#ffffff" text-anchor="middle">Get started</text>
+    <rect x="740" y="220" width="290" height="380" rx="14" fill="#f9fafb" stroke="#e5e7eb"/>
+    <text x="885" y="270" font-size="18" font-weight="bold" fill="#111827" text-anchor="middle">Team</text>
+    <text x="885" y="330" font-size="34" font-weight="bold" fill="#111827" text-anchor="middle">$79</text>
+  </g>
+</svg>`
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+}
 
 /**
  * Demo seeder (COCKPIT_DEMO=1): populates an in-memory store with three
@@ -87,6 +112,20 @@ export function runDemo(store: Store, broadcast: (e: CockpitEvent) => void): voi
   convo(a.id, { t: 'tool-result', toolUseId: 'tool-pw-1', ok: true, content: 'Navigated to http://localhost:3000/pricing', ts: now - 28000 })
   convo(a.id, { t: 'text-start', kind: 'text', ts: now - 5000 })
   convo(a.id, { t: 'text-delta', kind: 'text', delta: 'Dev server is up and the pricing page loads in the shared browser. Now walking through the full login flow to confirm the redirect lands back on ' })
+
+  // Session A's shared browser: live state, a frame, and console traffic
+  const browser = (ev: BrowserEvent): void => broadcast({ kind: 'browser', sessionId: a.id, ev })
+  browser({
+    t: 'state', running: true, url: 'http://localhost:3000/pricing',
+    tabs: [{ id: 'demo-tab', title: 'Pricing — Acme', url: 'http://localhost:3000/pricing' }],
+    activeTabId: 'demo-tab'
+  })
+  browser({ t: 'frame', dataUrl: demoFrame(), w: 1100, h: 800 })
+  browser({ t: 'console', entry: { id: 1, level: 'info', source: 'console', text: '[HMR] connected', url: 'http://localhost:3000/_next/static/chunks/webpack.js', line: 214, ts: now - 27000 } })
+  browser({ t: 'console', entry: { id: 2, level: 'log', source: 'console', text: 'auth: restoring session from cookie acme_session', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 88, ts: now - 26000 } })
+  browser({ t: 'console', entry: { id: 3, level: 'warn', source: 'console', text: 'auth: cookie missing on callback — retrying redirect (attempt 3)', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 131, ts: now - 25000 } })
+  browser({ t: 'console', entry: { id: 4, level: 'error', source: 'exception', text: 'Error: redirect loop detected: /login → /pricing → /login\n    at guard (auth.js:142:11)', url: 'http://localhost:3000/_next/static/chunks/auth.js', line: 142, ts: now - 24000 } })
+  browser({ t: 'console', entry: { id: 5, level: 'error', source: 'network', text: 'Failed to load resource: the server responded with a status of 401 (Unauthorized) — /api/session', url: 'http://localhost:3000/api/session', ts: now - 23000 } })
 
   // Session B — waiting on a permission
   convo(b.id, { t: 'user', text: 'Add a CSV export button to the monthly report page. Stream the download, don\'t buffer the whole file.', ts: now - 200000 })

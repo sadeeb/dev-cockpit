@@ -133,6 +133,19 @@ export interface BrowserTab {
   url: string
 }
 
+export type ConsoleLevel = 'log' | 'info' | 'warn' | 'error' | 'debug'
+
+export interface ConsoleEntry {
+  id: number
+  level: ConsoleLevel
+  /** 'console' = console.* call, 'exception' = uncaught JS error, 'network' = failed request */
+  source: 'console' | 'exception' | 'network'
+  text: string
+  url?: string
+  line?: number
+  ts: number
+}
+
 export type BrowserEvent =
   | {
       t: 'state'
@@ -144,6 +157,8 @@ export type BrowserEvent =
       error?: string
     }
   | { t: 'frame'; dataUrl: string; w: number; h: number }
+  | { t: 'console'; entry: ConsoleEntry }
+  | { t: 'console-clear' }
 
 export type BrowserInputEvent =
   | {

@@ -2,15 +2,17 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdirSync, rmSync } from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
-import type { BrowserEvent, BrowserInputEvent, BrowserTab } from '../shared/types'
+import type { BrowserEvent, BrowserInputEvent, BrowserTab, ConsoleEntry, ConsoleLevel } from '../shared/types'
 import { CdpClient, activateTarget, listTargets, waitForCdp } from './cdp'
 import { findChrome, findNode, getFixedPath } from './env'
 
 /**
  * The shared-browser upgrade (spec §7): one Chromium per session, launched
- * with remote debugging. The Playwright MCP attaches to the same instance
- * over CDP, and we screencast it into mission control — so the human and the
- * agent literally share one browser surface.
+ * headless with remote debugging. The Playwright MCP attaches to the same
+ * instance over CDP, and we screencast it into mission control — so the human
+ * and the agent literally share one browser surface, entirely inside the app
+ * (no separate desktop window). Console output, JS exceptions, and failed
+ * network requests are captured over CDP so they can be sent to the agent.
  */
 
 interface LiveBrowser {
@@ -24,6 +26,9 @@ interface LiveBrowser {
   lastFrameAt: number
   starting: boolean
   closing: boolean
+  consoleSeq: number
+  consoleWindowStart: number
+  consoleWindowCount: number
 }
 
 export class BrowserManager {
@@ -81,6 +86,9 @@ export class BrowserManager {
     const proc = spawn(
       chrome,
       [
+        // Headless: the embedded panel is the only browser surface — no
+        // separate desktop window competing with the app for attention.
+        '--headless=new',
         `--remote-debugging-port=${port}`,
         `--user-data-dir=${profile}`,
         '--no-first-run',
@@ -104,7 +112,10 @@ export class BrowserManager {
       pollTimer: null,
       lastFrameAt: 0,
       starting: true,
-      closing: false
+      closing: false,
+      consoleSeq: 0,
+      consoleWindowStart: 0,
+      consoleWindowCount: 0
     }
     this.live.set(sessionId, lb)
     this.emit(sessionId, { t: 'state', running: false, starting: true })
@@ -185,6 +196,7 @@ export class BrowserManager {
       const p = params as { frame?: { parentId?: string; url?: string } }
       if (p.frame && !p.frame.parentId && p.frame.url) {
         lb.url = p.frame.url
+        this.emit(sessionId, { t: 'console-clear' })
         this.emitState(sessionId, lb)
       }
     })
@@ -192,8 +204,66 @@ export class BrowserManager {
       if (lb.page === client) lb.page = null
     })
 
+    client.on('Runtime.consoleAPICalled', (params) => {
+      const p = params as {
+        type: string
+        args: RemoteObject[]
+        stackTrace?: { callFrames?: { url?: string; lineNumber?: number }[] }
+      }
+      const levelMap: Record<string, ConsoleLevel> = {
+        warning: 'warn',
+        error: 'error',
+        debug: 'debug',
+        info: 'info',
+        assert: 'error'
+      }
+      const frame = p.stackTrace?.callFrames?.[0]
+      this.pushConsole(sessionId, lb, {
+        level: levelMap[p.type] ?? 'log',
+        source: 'console',
+        text: p.args.map(formatRemoteObject).join(' '),
+        url: frame?.url,
+        line: frame?.lineNumber !== undefined ? frame.lineNumber + 1 : undefined
+      })
+    })
+    client.on('Runtime.exceptionThrown', (params) => {
+      const p = params as {
+        exceptionDetails: {
+          text: string
+          url?: string
+          lineNumber?: number
+          exception?: { description?: string }
+        }
+      }
+      const d = p.exceptionDetails
+      this.pushConsole(sessionId, lb, {
+        level: 'error',
+        source: 'exception',
+        text: d.exception?.description ?? d.text,
+        url: d.url,
+        line: d.lineNumber !== undefined ? d.lineNumber + 1 : undefined
+      })
+    })
+    client.on('Log.entryAdded', (params) => {
+      const p = params as {
+        entry: { source: string; level: string; text: string; url?: string; lineNumber?: number }
+      }
+      // Runtime.* already covers console calls and JS errors — only take the
+      // network channel here (failed requests, 4xx/5xx, CORS, mixed content).
+      if (p.entry.source !== 'network') return
+      this.pushConsole(sessionId, lb, {
+        level: p.entry.level === 'error' ? 'error' : p.entry.level === 'warning' ? 'warn' : 'info',
+        source: 'network',
+        text: p.entry.text,
+        url: p.entry.url,
+        line: p.entry.lineNumber !== undefined ? p.entry.lineNumber + 1 : undefined
+      })
+    })
+
     try {
       await client.send('Page.enable')
+      await client.send('Runtime.enable')
+      await client.send('Log.enable')
       const info = lb.tabs.find((t) => t.id === targetId)
       if (info) lb.url = info.url
       await client.send('Page.startScreencast', {
@@ -207,6 +277,26 @@ export class BrowserManager {
       /* tab may have closed mid-attach; poller will recover */
     }
     this.emitState(sessionId, lb)
+  }
+
+  /** Forward a console entry, rate-limited so a log-spamming page can't flood IPC. */
+  private pushConsole(sessionId: string, lb: LiveBrowser, e: Omit<ConsoleEntry, 'id' | 'ts'>): void {
+    const now = Date.now()
+    if (now - lb.consoleWindowStart > 1000) {
+      lb.consoleWindowStart = now
+      lb.consoleWindowCount = 0
+    }
+    lb.consoleWindowCount++
+    if (lb.consoleWindowCount > 50) {
+      if (lb.consoleWindowCount === 51) {
+        this.emit(sessionId, {
+          t: 'console',
+          entry: { id: ++lb.consoleSeq, level: 'warn', source: 'console', text: '… console output truncated (page is logging very fast)', ts: now }
+        })
+      }
+      return
+    }
+    this.emit(sessionId, { t: 'console', entry: { ...e, id: ++lb.consoleSeq, ts: now } })
   }
 
   private emitState(sessionId: string, lb: LiveBrowser): void {
@@ -322,6 +412,35 @@ export class BrowserManager {
       }
     }
   }
+}
+
+interface RemoteObject {
+  type: string
+  subtype?: string
+  value?: unknown
+  unserializableValue?: string
+  description?: string
+  preview?: { properties?: { name: string; value?: string }[]; overflow?: boolean }
+}
+
+/** Render a CDP RemoteObject roughly the way DevTools would, in one line. */
+function formatRemoteObject(o: RemoteObject): string {
+  if (o.type === 'string') return String(o.value)
+  if (o.type === 'undefined') return 'undefined'
+  if (o.unserializableValue) return o.unserializableValue
+  if (o.value !== undefined) {
+    try {
+      return JSON.stringify(o.value)
+    } catch {
+      return String(o.value)
+    }
+  }
+  if (o.preview?.properties) {
+    const inner = o.preview.properties.map((p) => `${p.name}: ${p.value ?? '…'}`).join(', ')
+    const body = `{${inner}${o.preview.overflow ? ', …' : ''}}`
+    return o.subtype === 'array' ? `[${inner}${o.preview.overflow ? ', …' : ''}]` : body
+  }
+  return o.description ?? o.type
 }
 
 function freePort(): Promise<number> {

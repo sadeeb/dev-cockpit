@@ -99,12 +99,15 @@ function Card({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
       {pendingPerm && <div className="card-perm">⚠ Waiting for your approval</div>}
 
       {ticker.length > 0 && (
-        <div className="card-ticker">
-          {ticker.map((t, i) => (
-            <span key={i} className={cx('tick', t.running && 'running', t.ok === false && 'failed')}>
-              {t.name}
-            </span>
-          ))}
+        <div className={cx('card-ticker', row.status === 'running' && 'live')}>
+          <div className="ticker-track">
+            {/* live marquee loops the list; keyframe slides one full copy width */}
+            {(row.status === 'running' ? [...ticker, ...ticker] : ticker).map((t, i) => (
+              <span key={i} className={cx('tick', t.running && 'running', t.ok === false && 'failed')}>
+                {t.name}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -130,7 +133,7 @@ export function Board({ state }: { state: AppState }): ReactNode {
       <div className="board-head">
         <h1>Mission Control</h1>
         <p className="dim">
-          Every active session, its checklist, tools, and live browser — derived straight from the agent stream.
+          All birds in the air: every session, its checklist, tools, and live browser at a glance.
         </p>
       </div>
       <div className="board">

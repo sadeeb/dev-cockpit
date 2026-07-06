@@ -1,14 +1,93 @@
-import { Globe, Power, RotateCw, X } from 'lucide-react'
-import { useRef, useState, type ReactNode } from 'react'
-import type { BrowserInputEvent, SessionRow } from '../../../shared/types'
+import { Globe, MessageSquarePlus, Power, RotateCw, SquareChevronRight, Trash2, X } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { BrowserInputEvent, ConsoleEntry, SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
 import { cx } from '../util'
 
 /**
  * Embedded live view of the session's shared browser: a CDP screencast the
- * human can click, scroll, and type into — the same Chromium the agent
- * drives through the Playwright MCP.
+ * human can click, scroll, and type into — the same headless Chromium the
+ * agent drives through the Playwright MCP. The console drawer below the
+ * viewport captures logs/errors and can drop them straight into the chat.
  */
+
+function fmtConsoleForChat(entries: ConsoleEntry[], url: string): string {
+  const lines = entries.map((e) => {
+    const loc = e.url ? ` (${e.url.split('/').pop()}${e.line ? `:${e.line}` : ''})` : ''
+    return `[${e.level}] ${e.text}${loc}`
+  })
+  return `Browser console at ${url || 'about:blank'}:\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n`
+}
+
+function ConsoleDrawer({ row, entries, url }: { row: SessionRow; entries: ConsoleEntry[]; url: string }): ReactNode {
+  const [open, setOpen] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const errors = entries.filter((e) => e.level === 'error').length
+
+  // A new page error pops the drawer open — the cockpit's warning light.
+  const prevErrors = useRef(0)
+  useEffect(() => {
+    if (errors > prevErrors.current) setOpen(true)
+    prevErrors.current = errors
+  }, [errors])
+
+  useEffect(() => {
+    const el = bodyRef.current
+    if (el && open) el.scrollTop = el.scrollHeight
+  }, [entries.length, open])
+
+  const sendRecent = (): void => {
+    const recent = entries.slice(-20)
+    if (!recent.length) return
+    store.insertIntoComposer(row.id, fmtConsoleForChat(recent, url))
+  }
+
+  return (
+    <div className={cx('console-drawer', open && 'open')}>
+      <div className="console-head">
+        <button className="console-toggle" onClick={() => setOpen(!open)}>
+          <SquareChevronRight size={13} />
+          Console
+          {entries.length > 0 && <span className="console-count">{entries.length}</span>}
+          {errors > 0 && <span className="console-count err">{errors}</span>}
+        </button>
+        <button
+          className="icon-btn"
+          title="Drop recent console output into the chat"
+          disabled={!entries.length}
+          onClick={sendRecent}
+        >
+          <MessageSquarePlus size={13} />
+        </button>
+        <button className="icon-btn" title="Clear console" disabled={!entries.length} onClick={() => store.clearConsole(row.id)}>
+          <Trash2 size={13} />
+        </button>
+      </div>
+      {open && (
+        <div className="console-body" ref={bodyRef}>
+          {entries.length === 0 && <div className="console-empty">Quiet in here. Logs, errors, and failed requests from the page land in this drawer.</div>}
+          {entries.map((e) => (
+            <button
+              key={e.id}
+              className={cx('console-line', e.level)}
+              title="Click to drop this line into the chat"
+              onClick={() => store.insertIntoComposer(row.id, fmtConsoleForChat([e], url))}
+            >
+              <span className="console-level">{e.source === 'network' ? 'net' : e.level}</span>
+              <span className="console-text">{e.text}</span>
+              {e.url && (
+                <span className="console-loc">
+                  {e.url.split('/').pop()}
+                  {e.line ? `:${e.line}` : ''}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
   const b = state.browsers[row.id]
   const [urlDraft, setUrlDraft] = useState<string | null>(null)
@@ -140,7 +219,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
           <div className="browser-placeholder">
             {b?.starting ? (
               <>
-                <span className="pulse-dot" /> Launching browser…
+                <span className="pulse-dot" /> Spinning up the co-browser…
               </>
             ) : b?.error ? (
               <span className="bad">{b.error}</span>
@@ -148,8 +227,8 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
               <>
                 <Globe size={22} className="dim" />
                 <p>
-                  The agent and you share this browser. It launches automatically when the agent uses a browser tool —
-                  or start it now with the power button.
+                  You and the agent fly this browser together — it lives right here, no extra window. It wakes up when
+                  the agent reaches for a browser tool, or hit the power button.
                 </p>
                 <p className="dim small">Heads-up: pages the agent sees are sent to the model. Use dev/test data only.</p>
               </>
@@ -157,8 +236,9 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
           </div>
         )}
       </div>
+      <ConsoleDrawer row={row} entries={b?.console ?? []} url={b?.url ?? ''} />
       <div className="browser-foot">
-        Click, scroll, and type directly in the preview — it drives the real browser window.
+        Click, scroll, type — this viewport <em>is</em> the browser. Console lines click straight into the chat.
       </div>
     </aside>
   )

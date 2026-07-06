@@ -28,11 +28,12 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
         </div>
         <h1>Dev Cockpit</h1>
         <p className="welcome-tag">
-          Mission control for Claude Code — structured sessions, auto-titles, GitHub issues, and a shared live browser.
+          Your flight deck for Claude Code — run a squadron of sessions, wire in GitHub issues, and co-pilot a live
+          browser with the agent. Strap in.
         </p>
 
         <button className="btn primary big" onClick={() => store.openModal({ m: 'new-session' })}>
-          <Plus size={16} /> Create your first session
+          <Plus size={16} /> Start your first mission
         </button>
 
         <div className="welcome-tips">
@@ -53,8 +54,8 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
           </div>
           <div className="tip">
             <MonitorPlay size={15} />
-            <b>Shared browser</b>
-            <span>Watch the agent drive your app live — and grab the wheel anytime.</span>
+            <b>Co-piloted browser</b>
+            <span>The agent flies your app in an embedded browser — grab the stick anytime, and beam console logs into the chat.</span>
           </div>
         </div>
 

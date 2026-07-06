@@ -219,7 +219,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
       <div className="session-body">
         <div className="session-center">
           <Conversation convo={convo} row={row} />
-          <Composer row={row} convo={convo} />
+          <Composer row={row} convo={convo} insert={state.composerInsert[row.id]} />
         </div>
         {row.browserEnabled && browserOpen && <BrowserPanel state={state} row={row} />}
         {drawerOpen && <EventDrawer sessionId={row.id} state={state} />}
