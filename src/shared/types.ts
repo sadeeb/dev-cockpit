@@ -201,6 +201,7 @@ export type UiCommand =
   | { c: 'toggle-board' }
   | { c: 'open-settings' }
   | { c: 'select-session-index'; index: number }
+  | { c: 'select-session'; id: string }
 
 export interface GitFileChange {
   path: string
@@ -238,6 +239,8 @@ export interface Settings {
   browserSafetyAcked: boolean
   chromePath: string
   sendOnEnter: boolean
+  /** Notify natively when an unfocused session needs you / errors / finishes. */
+  notifications: boolean
 }
 
 export interface CreateSessionOpts {

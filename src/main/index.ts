@@ -1,7 +1,7 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } from 'electron'
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { BrowserInputEvent, CockpitEvent, UiCommand } from '../shared/types'
+import type { BrowserInputEvent, CockpitEvent, SessionRow, SessionStatus, UiCommand } from '../shared/types'
 import { BrowserManager } from './browserManager'
 import { demoGitChanges, demoGitFileDiff, runDemo } from './demo'
 import { fixPath, preflight } from './env'
@@ -22,6 +22,51 @@ const eventTaps: ((e: CockpitEvent) => void)[] = []
 function broadcast(e: CockpitEvent): void {
   win?.webContents.send('cockpit:event', e)
   for (const tap of eventTaps) tap(e)
+  if (e.kind === 'session-updated') onStatusMaybeChanged(e.session)
+  else if (e.kind === 'session-removed') {
+    lastStatus.delete(e.sessionId)
+    updateBadge()
+  } else if (e.kind === 'sessions') {
+    for (const s of e.sessions) lastStatus.set(s.id, s.status) // seed silently
+    updateBadge()
+  }
+}
+
+// ── attention: dock badge + native notifications ──────────────────────────────
+// The badge counts sessions that need a human; notifications only fire while
+// the window is unfocused — if you're looking at the app, you already know.
+
+const lastStatus = new Map<string, SessionStatus>()
+
+function updateBadge(): void {
+  const n = manager?.listSessions().filter((s) => s.status === 'waiting' || s.status === 'error').length ?? 0
+  app.setBadgeCount(n)
+}
+
+function onStatusMaybeChanged(row: SessionRow): void {
+  const prev = lastStatus.get(row.id)
+  lastStatus.set(row.id, row.status)
+  updateBadge()
+  if (prev === undefined || prev === row.status) return
+  if (!store.getSettings().notifications || !Notification.isSupported()) return
+  if (win?.isFocused()) return
+
+  let title: string | null = null
+  if (row.status === 'waiting') title = 'Needs you'
+  else if (row.status === 'error') title = 'Session hit an error'
+  else if (row.status === 'done' && prev === 'running') title = 'Agent finished'
+  if (!title) return
+
+  const n = new Notification({ title: `${title} — Dev Cockpit`, body: row.title, silent: row.status === 'done' })
+  n.on('click', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+    }
+    sendUiCommand({ c: 'select-session', id: row.id })
+  })
+  n.show()
 }
 
 function sendUiCommand(command: UiCommand): void {

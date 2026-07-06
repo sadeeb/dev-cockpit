@@ -131,9 +131,10 @@ function SettingsModal({ state }: { state: AppState }): ReactNode {
   const [origins, setOrigins] = useState(s?.allowedOrigins ?? '')
   const [chromePath, setChromePath] = useState(s?.chromePath ?? '')
   const [sendOnEnter, setSendOnEnter] = useState(s?.sendOnEnter ?? true)
+  const [notifications, setNotifications] = useState(s?.notifications ?? true)
 
   const save = async (): Promise<void> => {
-    await store.saveSettings({ allowedOrigins: origins.trim(), chromePath: chromePath.trim(), sendOnEnter })
+    await store.saveSettings({ allowedOrigins: origins.trim(), chromePath: chromePath.trim(), sendOnEnter, notifications })
     await store.refreshPreflight()
     store.closeModal()
   }
@@ -143,6 +144,11 @@ function SettingsModal({ state }: { state: AppState }): ReactNode {
       <label className="field check">
         <input type="checkbox" checked={sendOnEnter} onChange={(e) => setSendOnEnter(e.target.checked)} />
         <span>Enter sends the message (Shift+Enter for a new line)</span>
+      </label>
+
+      <label className="field check">
+        <input type="checkbox" checked={notifications} onChange={(e) => setNotifications(e.target.checked)} />
+        <span>Notify me when a background session needs approval, errors, or finishes</span>
       </label>
 
       <label className="field">

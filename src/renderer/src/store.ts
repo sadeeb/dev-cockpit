@@ -476,6 +476,9 @@ class CockpitStore {
         if (s) this.selectSession(s.id)
         break
       }
+      case 'select-session':
+        if (this.state.sessions.some((s) => s.id === cmd.id)) this.selectSession(cmd.id)
+        break
     }
   }
 
