@@ -1,4 +1,4 @@
-import { CircleDot, Globe, ListTodo, Plus } from 'lucide-react'
+import { CircleDot, Globe, ListTodo, Plus, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { SessionRow } from '../../../shared/types'
 import { store, type AppState, type ConvoItem, type ConvoState } from '../store'
@@ -62,7 +62,23 @@ function Card({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
   const pendingPerm = convo?.items.some((it) => it.k === 'perm' && !it.resolved)
 
   return (
-    <button className={cx('card', row.status)} onClick={() => store.selectSession(row.id)}>
+    <div
+      className={cx('card', row.status)}
+      role="button"
+      tabIndex={0}
+      onClick={() => store.selectSession(row.id)}
+      onKeyDown={(e) => e.key === 'Enter' && store.selectSession(row.id)}
+    >
+      <button
+        className="card-delete"
+        title="Delete this session"
+        onClick={(e) => {
+          e.stopPropagation()
+          store.openModal({ m: 'delete-session', id: row.id })
+        }}
+      >
+        <X size={13} />
+      </button>
       <div className="card-head">
         <span className={cx('status-pill', row.status)}>
           <span className="dot" />
@@ -123,7 +139,7 @@ function Card({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
         <span>{timeAgo(row.updatedAt)}</span>
         {row.totalCostUsd > 0 && <span>{fmtCost(row.totalCostUsd)}</span>}
       </div>
-    </button>
+    </div>
   )
 }
 

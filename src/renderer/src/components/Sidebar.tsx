@@ -1,4 +1,4 @@
-import { ArrowUpRight, LayoutGrid, Plus, Settings, Trash2 } from 'lucide-react'
+import { ArrowUpRight, LayoutGrid, Plus, Settings, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
@@ -27,7 +27,7 @@ function SessionItem({ row, index, active }: { row: SessionRow; index: number; a
             store.openModal({ m: 'delete-session', id: row.id })
           }}
         >
-          <Trash2 size={12} />
+          <X size={13} />
         </button>
         <ArrowUpRight size={14} className="side-arrow" />
       </div>
