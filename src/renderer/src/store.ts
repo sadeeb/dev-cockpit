@@ -12,6 +12,9 @@ import type {
   PermissionModeId,
   PermissionRequest,
   PreflightCheck,
+  ProcEvent,
+  ProcInfo,
+  ProcLine,
   SessionRow,
   Settings,
   TodoItem,
@@ -56,6 +59,12 @@ export interface ConvoState {
   streaming: boolean
 }
 
+export interface ProcUiState {
+  procs: ProcInfo[]
+  lines: ProcLine[]
+  seeded: boolean
+}
+
 export interface BrowserUiState {
   running: boolean
   starting: boolean
@@ -92,6 +101,8 @@ export interface AppState {
   browserPanel: Record<string, boolean>
   drawer: Record<string, boolean>
   changesPanel: Record<string, boolean>
+  procPanel: Record<string, boolean>
+  procs: Record<string, ProcUiState>
   /** Content a panel wants appended to a session's composer (nonce marks each request). */
   composerInsert: Record<string, { text: string; images?: string[]; nonce: number }>
   settings: Settings | null
@@ -294,6 +305,8 @@ class CockpitStore {
     browserPanel: {},
     drawer: {},
     changesPanel: {},
+    procPanel: {},
+    procs: {},
     composerInsert: {},
     settings: null,
     preflight: null,
@@ -392,6 +405,9 @@ class CockpitStore {
       case 'browser':
         this.applyBrowser(e.sessionId, e.ev)
         break
+      case 'proc':
+        this.applyProc(e.sessionId, e.ev)
+        break
       case 'toast':
         this.pushToast(e.level, e.message)
         break
@@ -456,6 +472,33 @@ class CockpitStore {
       if (ev.error) this.pushToast('error', ev.error)
     }
     this.state.browsers = { ...this.state.browsers, [sessionId]: next }
+  }
+
+  private applyProc(sessionId: string, ev: ProcEvent): void {
+    const cur = this.state.procs[sessionId] ?? { procs: [], lines: [], seeded: false }
+    let next: ProcUiState
+    if (ev.t === 'procs') next = { ...cur, procs: ev.procs }
+    else if (ev.t === 'lines') {
+      const lines = [...cur.lines, ...ev.lines]
+      if (lines.length > 600) lines.splice(0, lines.length - 600)
+      next = { ...cur, lines }
+    } else next = { ...cur, lines: [] }
+    this.state.procs = { ...this.state.procs, [sessionId]: next }
+  }
+
+  /** Replay main's buffer when the panel opens (lines emitted before it existed). */
+  async seedProcs(sessionId: string): Promise<void> {
+    if (this.state.procs[sessionId]?.seeded) return
+    // the buffered snapshot supersedes any live events that raced in
+    const { procs, lines } = await api.procList(sessionId)
+    this.state.procs = { ...this.state.procs, [sessionId]: { procs, lines, seeded: true } }
+    this.commit()
+  }
+
+  setProcPanel(id: string, open: boolean): void {
+    this.state.procPanel = { ...this.state.procPanel, [id]: open }
+    this.commit()
+    if (open) void this.seedProcs(id)
   }
 
   private handleUiCommand(cmd: UiCommand): void {

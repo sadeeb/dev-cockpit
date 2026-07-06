@@ -6,6 +6,7 @@ import {
   GitPullRequestArrow,
   Globe,
   Link2,
+  SquareTerminal,
   Unlink
 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -16,6 +17,7 @@ import { BrowserPanel } from './BrowserPanel'
 import { ChangesPanel } from './ChangesPanel'
 import { Composer } from './Composer'
 import { Conversation } from './Conversation'
+import { ProcessPanel } from './ProcessPanel'
 
 function StatusPill({ status }: { status: SessionRow['status'] }): ReactNode {
   const label: Record<string, string> = {
@@ -175,6 +177,8 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
   const browserOpen = state.browserPanel[row.id] ?? false
   const drawerOpen = state.drawer[row.id] ?? false
   const changesOpen = state.changesPanel[row.id] ?? false
+  const procOpen = state.procPanel[row.id] ?? false
+  const procsRunning = (state.procs[row.id]?.procs ?? []).some((p) => p.running)
 
   return (
     <div className="session-view">
@@ -217,6 +221,13 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
             <GitBranch size={15} />
           </button>
           <button
+            className={cx('icon-btn', procOpen && 'active', !procOpen && procsRunning && 'attention')}
+            title="Background processes (dev server, watchers)"
+            onClick={() => store.setProcPanel(row.id, !procOpen)}
+          >
+            <SquareTerminal size={15} />
+          </button>
+          <button
             className={cx('icon-btn', drawerOpen && 'active')}
             title="Raw agent event stream"
             onClick={() => store.setDrawer(row.id, !drawerOpen)}
@@ -233,6 +244,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
         </div>
         {row.browserEnabled && browserOpen && <BrowserPanel state={state} row={row} />}
         {changesOpen && <ChangesPanel row={row} />}
+        {procOpen && <ProcessPanel state={state} row={row} />}
         {drawerOpen && <EventDrawer sessionId={row.id} state={state} />}
       </div>
     </div>

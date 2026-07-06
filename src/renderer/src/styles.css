@@ -642,6 +642,47 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .changes-commit input:focus { box-shadow: 0 0 0 2.5px rgba(0, 114, 227, 0.25); }
 
+/* ── process panel: dev servers live here ── */
+.proc-panel {
+  width: 420px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-left: 1.5px solid var(--ink); background: var(--code-bg); min-width: 320px;
+}
+.proc-head { display: flex; align-items: center; gap: 4px; padding: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.proc-cmd { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.proc-cmd input {
+  flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px; padding: 4.5px 12px; font-size: 11.5px; font-family: var(--mono);
+  color: var(--code-tx); outline: none; user-select: text;
+}
+.proc-cmd input::placeholder { color: var(--code-dim); }
+.proc-cmd input:focus { border-color: var(--c-yellow); }
+.proc-head .icon-btn { color: var(--code-dim); }
+.proc-head .icon-btn:hover { color: var(--code-bg); background: var(--c-yellow); }
+.proc-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 0; }
+.proc-chip {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  border-radius: 999px; padding: 3px 6px 3px 10px;
+  background: rgba(255, 255, 255, 0.08); color: var(--code-tx);
+}
+.proc-chip.running { background: rgba(0, 170, 60, 0.25); color: #7ef0b2; }
+.proc-chip.stopped { color: var(--code-dim); }
+.proc-chip-cmd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.proc-chip em { font-style: normal; font-size: 9.5px; opacity: 0.8; }
+.proc-chip button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; color: inherit; }
+.proc-chip button:hover { background: var(--c-red); color: #fff; }
+.proc-body { flex: 1; overflow-y: auto; padding: 6px 0 8px; }
+.proc-empty { padding: 16px 12px; font-size: 11.5px; color: var(--code-dim); font-style: italic; }
+.proc-line {
+  display: block; width: 100%; text-align: left;
+  font-family: var(--mono); font-size: 10.8px; line-height: 1.5;
+  padding: 1px 12px; color: var(--code-tx); border-left: 2px solid transparent;
+  white-space: pre-wrap; word-break: break-word; user-select: text;
+}
+.proc-line:hover { background: rgba(255, 255, 255, 0.05); border-left-color: var(--c-yellow); }
+
+.icon-btn.attention { color: var(--c-green); }
+
 /* ── event drawer ── */
 .drawer { width: 380px; flex-shrink: 0; border-left: 1.5px solid var(--ink); background: var(--code-bg); display: flex; flex-direction: column; }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; font-size: 11px; font-weight: 700; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--code-tx); }

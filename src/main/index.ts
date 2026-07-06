@@ -6,6 +6,7 @@ import { BrowserManager } from './browserManager'
 import { demoGitChanges, demoGitFileDiff, runDemo } from './demo'
 import { fixPath, preflight } from './env'
 import { createWorktree, gitChanges, gitCommit, gitDiscard, gitFileDiff, mergeWorktree, removeWorktree, worktreeInfo } from './git'
+import { ProcessManager } from './processManager'
 import { SessionManager } from './sessionManager'
 import { Store } from './store'
 
@@ -16,6 +17,7 @@ let win: BrowserWindow | null = null
 let store: Store
 let browsers: BrowserManager
 let manager: SessionManager
+let procs: ProcessManager
 let demoStarted = false
 const eventTaps: ((e: CockpitEvent) => void)[] = []
 
@@ -183,6 +185,7 @@ function registerIpc(): void {
     },
     deleteSession: async (id: string) => {
       const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      procs.stopSession(id)
       manager.deleteSession(id)
       if (dir) await removeWorktree(dir)
     },
@@ -237,6 +240,13 @@ function registerIpc(): void {
       const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
       return dir ? mergeWorktree(dir) : { ok: false, error: 'unknown session' }
     },
+    procStart: (id: string, command: string) => {
+      const dir = manager.listSessions().find((s) => s.id === id)?.workingDir
+      return dir ? procs.start(id, command, dir) : { error: 'unknown session' }
+    },
+    procStop: (id: string, procId: string) => procs.stop(id, procId),
+    procList: (id: string) => procs.list(id),
+    procClear: (id: string) => procs.clearLines(id),
     browserOpen: async (id: string) => {
       try {
         await browsers.ensure(id)
@@ -298,6 +308,7 @@ if (!gotLock) {
       () => store.getSettings().chromePath || undefined
     )
     manager = new SessionManager(store, browsers, broadcast)
+    procs = new ProcessManager((sessionId, ev) => broadcast({ kind: 'proc', sessionId, ev }))
     registerIpc()
     buildMenu()
     createWindow()
@@ -321,6 +332,7 @@ if (!gotLock) {
   })
 
   app.on('before-quit', () => {
+    procs?.stopAll()
     manager?.shutdown()
   })
 }

@@ -187,12 +187,33 @@ export type BrowserInputEvent =
   | { t: 'text'; text: string }
   | { t: 'key'; key: string; code: string; kind: 'down' | 'up'; modifiers: number }
 
+export interface ProcInfo {
+  id: string
+  command: string
+  running: boolean
+  exitCode: number | null
+  startedAt: number
+}
+
+export interface ProcLine {
+  id: number
+  procId: string
+  line: string
+  ts: number
+}
+
+export type ProcEvent =
+  | { t: 'procs'; procs: ProcInfo[] }
+  | { t: 'lines'; lines: ProcLine[] }
+  | { t: 'clear' }
+
 export type CockpitEvent =
   | { kind: 'sessions'; sessions: SessionRow[] }
   | { kind: 'session-updated'; session: SessionRow }
   | { kind: 'session-removed'; sessionId: string }
   | { kind: 'convo'; sessionId: string; ev: ConvoEvent }
   | { kind: 'browser'; sessionId: string; ev: BrowserEvent }
+  | { kind: 'proc'; sessionId: string; ev: ProcEvent }
   | { kind: 'toast'; level: 'info' | 'error'; message: string }
   | { kind: 'ui-command'; command: UiCommand }
 
@@ -301,6 +322,10 @@ export interface CockpitApi {
   gitDiscard(sessionId: string, path: string): Promise<GitCommitResult>
   gitWorktreeInfo(sessionId: string): Promise<WorktreeStatus | null>
   gitMergeBack(sessionId: string): Promise<GitCommitResult>
+  procStart(sessionId: string, command: string): Promise<ProcInfo | { error: string }>
+  procStop(sessionId: string, procId: string): Promise<void>
+  procList(sessionId: string): Promise<{ procs: ProcInfo[]; lines: ProcLine[] }>
+  procClear(sessionId: string): Promise<void>
   browserOpen(sessionId: string): Promise<void>
   browserClose(sessionId: string): Promise<void>
   browserNavigate(sessionId: string, url: string): Promise<void>
