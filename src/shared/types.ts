@@ -297,7 +297,8 @@ export interface ModelChoice {
 
 export const MODEL_CHOICES: ModelChoice[] = [
   { id: null, label: 'Default', hint: 'Your Claude Code default model' },
-  { id: 'opus', label: 'Opus', hint: 'Most capable, slower' },
+  { id: 'claude-fable-5', label: 'Fable', hint: 'Most capable — deep reasoning, long-horizon work (premium pricing)' },
+  { id: 'opus', label: 'Opus', hint: 'Highly capable, great default for hard work' },
   { id: 'sonnet', label: 'Sonnet', hint: 'Balanced speed and capability' },
   { id: 'haiku', label: 'Haiku', hint: 'Fastest, lightweight tasks' }
 ]
