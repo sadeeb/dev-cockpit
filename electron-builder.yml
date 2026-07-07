@@ -1,5 +1,5 @@
-appId: dev.cockpit.app
-productName: Dev Cockpit
+appId: app.argus.desktop
+productName: Argus
 directories:
   buildResources: build
   output: dist

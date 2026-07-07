@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } from 'electron'
-import { writeFileSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { BrowserInputEvent, CockpitEvent, SessionRow, SessionStatus, UiCommand } from '../shared/types'
 import { BrowserManager } from './browserManager'
@@ -59,7 +59,7 @@ function onStatusMaybeChanged(row: SessionRow): void {
   else if (row.status === 'done' && prev === 'running') title = 'Agent finished'
   if (!title) return
 
-  const n = new Notification({ title: `${title} · Dev Cockpit`, body: row.title, silent: row.status === 'done' })
+  const n = new Notification({ title: `${title} · Argus`, body: row.title, silent: row.status === 'done' })
   n.on('click', () => {
     if (win) {
       if (win.isMinimized()) win.restore()
@@ -85,7 +85,7 @@ function createWindow(): void {
     backgroundColor: '#0a0d13',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 17 },
-    title: 'Dev Cockpit',
+    title: 'Argus',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -132,7 +132,7 @@ function buildMenu(): void {
   const isMac = process.platform === 'darwin'
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(isMac
-      ? [{ label: 'Dev Cockpit', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Settings…', accelerator: 'Cmd+,', click: () => sendUiCommand({ c: 'open-settings' }) }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'quit' as const }] }]
+      ? [{ label: 'Argus', submenu: [{ role: 'about' as const }, { type: 'separator' as const }, { label: 'Settings…', accelerator: 'Cmd+,', click: () => sendUiCommand({ c: 'open-settings' }) }, { type: 'separator' as const }, { role: 'hide' as const }, { role: 'quit' as const }] }]
       : []),
     {
       label: 'File',
@@ -287,6 +287,32 @@ function registerIpc(): void {
   )
 }
 
+/**
+ * One-time carry-over from the app's old identity ("Dev Cockpit"): the rename
+ * moved userData to .../Argus, so copy the session store and browser profiles
+ * across the first time Argus starts with nothing in its own directory.
+ */
+function migrateLegacyData(newDir: string): void {
+  try {
+    const oldDir = path.join(path.dirname(newDir), 'Dev Cockpit')
+    const alreadyMigrated = existsSync(path.join(newDir, 'cockpit.db')) || existsSync(path.join(newDir, 'cockpit.json'))
+    if (alreadyMigrated || !existsSync(oldDir)) return
+    mkdirSync(newDir, { recursive: true })
+    for (const f of ['cockpit.db', 'cockpit.json']) {
+      const src = path.join(oldDir, f)
+      if (existsSync(src)) copyFileSync(src, path.join(newDir, f))
+    }
+    const oldProfiles = path.join(oldDir, 'browser-profiles')
+    const newProfiles = path.join(newDir, 'browser-profiles')
+    if (existsSync(oldProfiles) && !existsSync(newProfiles)) {
+      cpSync(oldProfiles, newProfiles, { recursive: true })
+    }
+    console.log('[argus] migrated session data from Dev Cockpit')
+  } catch (e) {
+    console.warn('[argus] legacy data migration failed (starting fresh):', e)
+  }
+}
+
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
@@ -304,6 +330,7 @@ if (!gotLock) {
       DEMO || SMOKE || process.env.COCKPIT_BROWSER_SMOKE === '1' || process.env.COCKPIT_FORK_SMOKE === '1'
         ? ':memory:'
         : app.getPath('userData')
+    if (dataDir !== ':memory:') migrateLegacyData(dataDir)
     store = new Store(dataDir)
     browsers = new BrowserManager(
       path.join(app.getPath('userData'), 'browser-profiles'),

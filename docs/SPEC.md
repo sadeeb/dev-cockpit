@@ -1,4 +1,4 @@
-# Dev Cockpit — Design Spec
+# Argus (né Dev Cockpit) — Design Spec
 
 > A desktop app that wraps Claude Code in a mission-control UI: terminal integration,
 > auto-titled sessions, GitHub issue linking, a multi-session board, and a shared

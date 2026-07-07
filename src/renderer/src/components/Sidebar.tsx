@@ -54,7 +54,7 @@ export function Sidebar({ state }: { state: AppState }): ReactNode {
         <span className="brand-mark" aria-hidden>
           <span /><span /><span /><span />
         </span>
-        <span className="brand-name">Dev Cockpit</span>
+        <span className="brand-name">Argus</span>
       </div>
 
       <button

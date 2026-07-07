@@ -22,7 +22,7 @@ import type {
 import { findNode, getFixedPath } from './env'
 
 const COCKPIT_NOTE =
-  'You are running inside Dev Cockpit, a desktop mission-control app that wraps Claude Code. ' +
+  'You are running inside Argus, a desktop mission-control app that wraps Claude Code. ' +
   'The user watches your work live: the conversation, your task list, tool activity, and (when browser tools ' +
   'mcp__playwright__* are available) a shared live browser they can also drive. Keep the TodoWrite task list ' +
   'up to date on multi-step work; it powers the mission-control board.'

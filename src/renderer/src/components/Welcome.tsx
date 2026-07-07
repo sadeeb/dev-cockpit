@@ -26,7 +26,7 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
         <div className="brand-mark large" aria-hidden>
           <span /><span /><span /><span />
         </div>
-        <h1>Dev Cockpit</h1>
+        <h1>Argus</h1>
         <p className="welcome-tag">
           Your flight deck for Claude Code: run a squadron of sessions, wire in GitHub issues, and co-pilot a live
           browser with the agent. Strap in.

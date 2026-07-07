@@ -1,4 +1,4 @@
-# Dev Cockpit
+# Argus
 
 A desktop app that turns Claude Code from a terminal tool into a **mission-control cockpit**: structured multi-session conversations, auto-titled sessions, GitHub issue linking, a live board across every active agent, and a **shared browser** the agent drives through the Playwright MCP while you watch — and steer — in real time.
 
