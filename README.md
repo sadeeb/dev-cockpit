@@ -127,3 +127,7 @@ The original design brief lives in [docs/SPEC.md](docs/SPEC.md).
 - **Node 20 pins**: Electron is pinned to v38 and electron-builder to 24.x; newer majors need Node 22 (ESM-only deps). Drop both pins together when upgrading Node.
 - **`AskUserQuestion` is disabled** for the agent; questions arrive as plain text in the conversation, which fits a chat UI better than the CLI's modal.
 - **Renamed from Dev Cockpit** (2026-07): user-visible identity is Argus; internal identifiers (`window.cockpit`, `COCKPIT_*` env vars, IPC channel names) intentionally keep the old name to avoid a risky rename-the-world diff. First launch after the rename migrates the session store and browser profiles automatically.
+
+## License
+
+MIT. Free, forever. PRs welcome; merging is at the maintainer's discretion.
