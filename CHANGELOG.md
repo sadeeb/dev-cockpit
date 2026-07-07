@@ -5,6 +5,13 @@ All notable changes to Argus are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-07
+
+### Fixed
+
+- Process panel no longer fails with a cryptic `spawn /bin/sh ENOENT` when the session's working directory is missing; it now says which folder doesn't exist
+- Typed working-directory paths are normalized at session creation: `~` expands to the home folder, whitespace is trimmed, and a nonexistent folder warns immediately instead of breaking the agent and dev servers later
+
 ## [1.2.0] - 2026-07-07
 
 ### Added

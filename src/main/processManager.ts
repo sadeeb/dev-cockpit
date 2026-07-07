@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import type { ProcEvent, ProcInfo, ProcLine } from '../shared/types'
 import { getFixedPath } from './env'
 
@@ -75,6 +76,10 @@ export class ProcessManager {
   start(sessionId: string, command: string, cwd: string): ProcInfo | { error: string } {
     const cmd = command.trim()
     if (!cmd) return { error: 'Empty command' }
+    if (!existsSync(cwd)) {
+      // node reports a missing cwd as a misleading "spawn /bin/sh ENOENT"
+      return { error: `The session's working directory doesn't exist: ${cwd}` }
+    }
     if ([...this.procs(sessionId).values()].filter((p) => p.info.running).length >= 5) {
       return { error: 'Five processes are already running in this session - stop one first.' }
     }

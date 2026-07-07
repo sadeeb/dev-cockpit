@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } from 'electron'
 import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import path from 'node:path'
 import type { BrowserInputEvent, CockpitEvent, SessionRow, SessionStatus, UiCommand } from '../shared/types'
 import { BrowserManager } from './browserManager'
@@ -171,6 +172,15 @@ function registerIpc(): void {
     createSession: async (
       opts: Parameters<SessionManager['createSession']>[0] & { useWorktree?: boolean; reviewPr?: string }
     ) => {
+      // typed paths arrive raw: expand ~ and trim, or every child process
+      // (agent, dev servers) dies with a cryptic "spawn /bin/sh ENOENT"
+      let dir = (opts.workingDir ?? '').trim()
+      if (dir === '~') dir = homedir()
+      else if (dir.startsWith('~/')) dir = path.join(homedir(), dir.slice(2))
+      opts = { ...opts, workingDir: dir }
+      if (!DEMO && !existsSync(dir)) {
+        broadcast({ kind: 'toast', level: 'error', message: `That folder doesn't exist: ${dir}` })
+      }
       if (opts.reviewPr && !DEMO) {
         const m = opts.reviewPr.match(/(\d+)(?!.*\d)/) // last number in "#123", "123", or a PR URL
         const pr = m ? Number(m[1]) : NaN
