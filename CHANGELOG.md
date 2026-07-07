@@ -5,6 +5,16 @@ All notable changes to Argus are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-07
+
+### Added
+
+- **Browser tab**: sessions with the browser enabled get a Chat / Browser tab strip. The Browser tab gives the shared browser the full center stage (with a wider console drawer) while the composer stays docked below, so console lines, point-at-element, and screenshots keep flowing into the chat. The compact side panel remains for glance mode, and the command palette can switch tabs.
+
+### Changed
+
+- Screencast resolution raised (1600px, quality 65) so the full-size viewport stays sharp.
+
 ## [1.1.0] - 2026-07-07
 
 ### Added

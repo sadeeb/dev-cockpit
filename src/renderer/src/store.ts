@@ -103,6 +103,8 @@ export interface AppState {
   drawer: Record<string, boolean>
   changesPanel: Record<string, boolean>
   procPanel: Record<string, boolean>
+  /** Per-session main-area tab: the conversation, or the browser at full size. */
+  sessionTab: Record<string, 'chat' | 'browser'>
   procs: Record<string, ProcUiState>
   /** Content a panel wants appended to a session's composer (nonce marks each request). */
   composerInsert: Record<string, { text: string; images?: string[]; nonce: number }>
@@ -307,6 +309,7 @@ class CockpitStore {
     drawer: {},
     changesPanel: {},
     procPanel: {},
+    sessionTab: {},
     procs: {},
     composerInsert: {},
     settings: null,
@@ -370,6 +373,7 @@ class CockpitStore {
             this.state.view = { kind: 'session', id }
             // demo screenshots want the changes panel visible
             this.state.changesPanel = { ...this.state.changesPanel, [id]: true }
+            if (dv.includes('fullbrowser')) this.state.sessionTab = { ...this.state.sessionTab, [id]: 'browser' }
           } else {
             this.state.view = { kind: 'board' }
           }
@@ -650,6 +654,12 @@ class CockpitStore {
   setChangesPanel(id: string, open: boolean): void {
     this.state.changesPanel = { ...this.state.changesPanel, [id]: open }
     this.commit()
+  }
+
+  setSessionTab(id: string, tab: 'chat' | 'browser'): void {
+    this.state.sessionTab = { ...this.state.sessionTab, [id]: tab }
+    this.commit()
+    if (tab === 'browser') void api.browserOpen(id)
   }
 
   /** Drop text (and optional image data-URLs) into the session's composer so the user can add words and send. */

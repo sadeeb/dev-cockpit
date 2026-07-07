@@ -88,7 +88,7 @@ function ConsoleDrawer({ row, entries, url }: { row: SessionRow; entries: Consol
     </div>
   )
 }
-export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
+export function BrowserPanel({ state, row, full }: { state: AppState; row: SessionRow; full?: boolean }): ReactNode {
   const b = state.browsers[row.id]
   const [urlDraft, setUrlDraft] = useState<string | null>(null)
   const [inspecting, setInspecting] = useState(false)
@@ -163,7 +163,7 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
   }
 
   return (
-    <aside className="browser-panel">
+    <aside className={cx('browser-panel', full && 'full')}>
       <div className="browser-bar">
         <Globe size={13} className="dim" />
         <form
@@ -206,9 +206,11 @@ export function BrowserPanel({ state, row }: { state: AppState; row: SessionRow 
         >
           <Power size={13} className={b?.running ? 'good' : ''} />
         </button>
-        <button className="icon-btn" title="Hide panel" onClick={() => store.setBrowserPanel(row.id, false)}>
-          <X size={13} />
-        </button>
+        {!full && (
+          <button className="icon-btn" title="Hide panel" onClick={() => store.setBrowserPanel(row.id, false)}>
+            <X size={13} />
+          </button>
+        )}
       </div>
 
       {(b?.tabs.length ?? 0) > 1 && (

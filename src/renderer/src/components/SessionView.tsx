@@ -181,6 +181,7 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
   const changesOpen = state.changesPanel[row.id] ?? false
   const procOpen = state.procPanel[row.id] ?? false
   const procsRunning = (state.procs[row.id]?.procs ?? []).some((p) => p.running)
+  const tab = row.browserEnabled ? (state.sessionTab[row.id] ?? 'chat') : 'chat'
 
   // plan hits 100% *while you watch* → confetti (never on merely opening a done session)
   const done = convo.todos.filter((t) => t.status === 'completed').length
@@ -260,17 +261,38 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
         </div>
       </header>
 
-      <div className="session-body">
-        <div className="session-center">
-          {burst > 0 && <ConfettiBurst key={burst} />}
-          <Conversation convo={convo} row={row} />
+      {row.browserEnabled && (
+        <div className="session-tabs">
+          <button className={cx('session-tab', tab === 'chat' && 'active')} onClick={() => store.setSessionTab(row.id, 'chat')}>
+            Chat
+          </button>
+          <button
+            className={cx('session-tab', tab === 'browser' && 'active')}
+            onClick={() => store.setSessionTab(row.id, 'browser')}
+          >
+            <Globe size={12} /> Browser
+          </button>
+        </div>
+      )}
+
+      {tab === 'browser' ? (
+        <div className="browser-tab-wrap">
+          <BrowserPanel state={state} row={row} full />
           <Composer row={row} convo={convo} insert={state.composerInsert[row.id]} />
         </div>
-        {row.browserEnabled && browserOpen && <BrowserPanel state={state} row={row} />}
-        {changesOpen && <ChangesPanel row={row} />}
-        {procOpen && <ProcessPanel state={state} row={row} />}
-        {drawerOpen && <EventDrawer sessionId={row.id} state={state} />}
-      </div>
+      ) : (
+        <div className="session-body">
+          <div className="session-center">
+            {burst > 0 && <ConfettiBurst key={burst} />}
+            <Conversation convo={convo} row={row} />
+            <Composer row={row} convo={convo} insert={state.composerInsert[row.id]} />
+          </div>
+          {row.browserEnabled && browserOpen && <BrowserPanel state={state} row={row} />}
+          {changesOpen && <ChangesPanel row={row} />}
+          {procOpen && <ProcessPanel state={state} row={row} />}
+          {drawerOpen && <EventDrawer sessionId={row.id} state={state} />}
+        </div>
+      )}
     </div>
   )
 }

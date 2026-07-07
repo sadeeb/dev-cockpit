@@ -84,6 +84,17 @@ function buildCommands(state: AppState): Command[] {
   )
   if (activeId) {
     const id = activeId
+    const activeRow = state.sessions.find((s) => s.id === id)
+    if (activeRow?.browserEnabled) {
+      const onBrowser = state.sessionTab[id] === 'browser'
+      cmds.push({
+        id: 'tab-switch',
+        label: onBrowser ? 'Switch to chat tab' : 'Switch to browser tab',
+        hint: 'full-size',
+        icon: <Globe size={14} />,
+        run: () => store.setSessionTab(id, onBrowser ? 'chat' : 'browser')
+      })
+    }
     cmds.push(
       {
         id: 'toggle-browser',

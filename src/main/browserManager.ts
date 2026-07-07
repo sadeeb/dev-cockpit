@@ -275,9 +275,9 @@ export class BrowserManager {
       if (info) lb.url = info.url
       await client.send('Page.startScreencast', {
         format: 'jpeg',
-        quality: 55,
-        maxWidth: 1100,
-        maxHeight: 900,
+        quality: 65,
+        maxWidth: 1600,
+        maxHeight: 1100,
         everyNthFrame: 1
       })
     } catch {
