@@ -5,7 +5,7 @@ import type { BrowserInputEvent, CockpitEvent, SessionRow, SessionStatus, UiComm
 import { BrowserManager } from './browserManager'
 import { demoGitChanges, demoGitFileDiff, runDemo } from './demo'
 import { fixPath, preflight } from './env'
-import { createWorktree, gitChanges, gitCommit, gitDiscard, gitFileDiff, mergeWorktree, removeWorktree, worktreeInfo } from './git'
+import { createPrWorktree, createWorktree, gitChanges, gitCommit, gitDiscard, gitFileDiff, mergeWorktree, removeWorktree, worktreeInfo } from './git'
 import { ProcessManager } from './processManager'
 import { SessionManager } from './sessionManager'
 import { Store } from './store'
@@ -168,7 +168,26 @@ type Handler = (...args: never[]) => unknown
 function registerIpc(): void {
   const handlers: Record<string, Handler> = {
     listSessions: () => manager.listSessions(),
-    createSession: async (opts: Parameters<SessionManager['createSession']>[0] & { useWorktree?: boolean }) => {
+    createSession: async (
+      opts: Parameters<SessionManager['createSession']>[0] & { useWorktree?: boolean; reviewPr?: string }
+    ) => {
+      if (opts.reviewPr && !DEMO) {
+        const m = opts.reviewPr.match(/(\d+)(?!.*\d)/) // last number in "#123", "123", or a PR URL
+        const pr = m ? Number(m[1]) : NaN
+        if (!Number.isFinite(pr) || pr <= 0) {
+          broadcast({ kind: 'toast', level: 'error', message: `Could not read a PR number from "${opts.reviewPr}"` })
+          return manager.createSession(opts)
+        }
+        const wt = await createPrWorktree(opts.workingDir, pr)
+        if (wt.ok && wt.dir) {
+          broadcast({ kind: 'toast', level: 'info', message: `PR #${pr} checked out on ${wt.branch}` })
+          const row = manager.createSession({ ...opts, workingDir: wt.dir })
+          void manager.linkIssue(row.id, `#${pr}`).catch(() => {}) // PRs resolve via the issues API; best effort
+          return manager.listSessions().find((s) => s.id === row.id) ?? row
+        }
+        broadcast({ kind: 'toast', level: 'error', message: wt.error ?? `Could not check out PR #${pr}` })
+        return manager.createSession(opts)
+      }
       if (opts.useWorktree && !DEMO) {
         const wt = await createWorktree(opts.workingDir)
         if (wt.ok && wt.dir) {

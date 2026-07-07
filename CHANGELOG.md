@@ -5,6 +5,16 @@ All notable changes to Argus are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-07
+
+### Added
+
+- **One-click PR review**: the new-session modal's Workspace section gains "Review a pull request". Enter `#123` or paste the PR URL; Argus fetches `pull/<n>/head` from origin (fork PRs included) into a managed worktree, opens the session there, and links the PR. Re-reviewing after new pushes picks up the latest head; deleting the session cleans the worktree up.
+
+### Changed
+
+- The "Own branch + worktree" checkbox became a three-way Workspace choice: use the folder directly, new branch + worktree, or review a PR.
+
 ## [1.0.0] - 2026-07-07
 
 First public release, MIT-licensed. Renamed from Dev Cockpit to **Argus**.

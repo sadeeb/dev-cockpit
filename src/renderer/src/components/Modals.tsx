@@ -39,7 +39,8 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
   const [model, setModel] = useState<string | null>(s?.defaultModel ?? null)
   const [mode, setMode] = useState<PermissionModeId>(s?.defaultPermissionMode ?? 'default')
   const [browser, setBrowser] = useState(false)
-  const [worktree, setWorktree] = useState(false)
+  const [workspace, setWorkspace] = useState<'direct' | 'worktree' | 'pr'>('direct')
+  const [prRef, setPrRef] = useState('')
   const [busy, setBusy] = useState(false)
 
   const pick = async (): Promise<void> => {
@@ -57,7 +58,8 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
         model,
         permissionMode: mode,
         browserEnabled: browser,
-        useWorktree: worktree
+        useWorktree: workspace === 'worktree',
+        reviewPr: workspace === 'pr' ? prRef.trim() : undefined
       })
     } finally {
       setBusy(false)
@@ -107,20 +109,48 @@ function NewSessionModal({ state }: { state: AppState }): ReactNode {
         </span>
       </label>
 
-      <label className="field check">
-        <input type="checkbox" checked={worktree} onChange={(e) => setWorktree(e.target.checked)} />
+      <label className="field">
         <span>
-          <GitBranch size={13} /> Own branch + worktree: run sessions in the same repo without them trampling each
-          other; merge back when done
+          <GitBranch size={13} /> Workspace
         </span>
+        <div className="radio-col">
+          <button className={cx('radio', workspace === 'direct' && 'active')} onClick={() => setWorkspace('direct')}>
+            <span className="radio-dot" />
+            <span className="radio-label">Use the folder directly</span>
+            <span className="radio-hint">Work on whatever is checked out</span>
+          </button>
+          <button className={cx('radio', workspace === 'worktree' && 'active')} onClick={() => setWorkspace('worktree')}>
+            <span className="radio-dot" />
+            <span className="radio-label">New branch + worktree</span>
+            <span className="radio-hint">Isolated copy; merge back when done</span>
+          </button>
+          <button className={cx('radio', workspace === 'pr' && 'active')} onClick={() => setWorkspace('pr')}>
+            <span className="radio-dot" />
+            <span className="radio-label">Review a pull request</span>
+            <span className="radio-hint">Checks the PR out into its own worktree</span>
+          </button>
+        </div>
+        {workspace === 'pr' && (
+          <input
+            autoFocus
+            value={prRef}
+            placeholder="#123  ·  or paste the PR URL"
+            onChange={(e) => setPrRef(e.target.value)}
+            spellCheck={false}
+          />
+        )}
       </label>
 
       <div className="modal-actions">
         <button className="btn subtle" onClick={() => store.closeModal()}>
           Cancel
         </button>
-        <button className="btn primary" disabled={!dir.trim() || busy} onClick={() => void create()}>
-          {busy ? 'Creating…' : 'Create session'}
+        <button
+          className="btn primary"
+          disabled={!dir.trim() || busy || (workspace === 'pr' && !/\d/.test(prRef))}
+          onClick={() => void create()}
+        >
+          {busy ? 'Creating…' : workspace === 'pr' ? 'Check out & review' : 'Create session'}
         </button>
       </div>
     </ModalShell>

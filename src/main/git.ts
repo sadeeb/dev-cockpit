@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { mkdirSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { GitChanges, GitCommitResult, GitFileChange } from '../shared/types'
@@ -148,6 +148,45 @@ export async function createWorktree(
     const dir = path.join(path.dirname(repoDir), `${path.basename(repoDir)}${WORKTREE_MARKER}`, slug)
     mkdirSync(path.dirname(dir), { recursive: true })
     await git(repoDir, ['worktree', 'add', '-b', branch, dir])
+    return { ok: true, dir, branch }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, error: msg.split('\n').find((l) => l.includes('fatal')) ?? msg.split('\n')[0] }
+  }
+}
+
+/**
+ * Check a pull request out into a managed worktree for review: fetches
+ * `pull/<n>/head` from origin (works for fork PRs too) into a local branch
+ * and adds a worktree for it, without disturbing the main checkout.
+ */
+export async function createPrWorktree(
+  repoDir: string,
+  pr: number
+): Promise<{ ok: boolean; dir?: string; branch?: string; error?: string }> {
+  try {
+    await git(repoDir, ['remote', 'get-url', 'origin'])
+  } catch {
+    return { ok: false, error: 'This repo has no "origin" remote; PR review needs one.' }
+  }
+  const branch = `cockpit/pr-${pr}`
+  const dir = path.join(path.dirname(repoDir), `${path.basename(repoDir)}${WORKTREE_MARKER}`, `pr-${pr}`)
+  if (existsSync(dir)) {
+    return { ok: false, error: `PR #${pr} is already checked out at ${dir}` }
+  }
+  try {
+    // +refspec force-updates the branch so a re-review picks up new pushes
+    await git(repoDir, ['fetch', 'origin', `+pull/${pr}/head:${branch}`])
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return {
+      ok: false,
+      error: `Could not fetch PR #${pr} from origin: ${msg.split('\n').find((l) => l.includes('fatal')) ?? msg.split('\n')[0]}`
+    }
+  }
+  try {
+    mkdirSync(path.dirname(dir), { recursive: true })
+    await git(repoDir, ['worktree', 'add', dir, branch])
     return { ok: true, dir, branch }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)

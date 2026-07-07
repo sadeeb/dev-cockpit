@@ -281,6 +281,8 @@ export interface CreateSessionOpts {
   browserEnabled: boolean
   /** Work on an isolated git worktree + branch instead of the repo itself. */
   useWorktree?: boolean
+  /** Review mode: a PR reference ("123", "#123", or a PR URL) to check out into a managed worktree. */
+  reviewPr?: string
 }
 
 export interface WorktreeStatus {
