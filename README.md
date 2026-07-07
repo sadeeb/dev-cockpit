@@ -6,12 +6,25 @@ Argus is a macOS desktop app that turns Claude Code from a terminal tool into a 
 
 ![Mission Control](docs/screenshots/mission-control.png)
 
-## Install / run
+## Install
+
+**From a release (recommended for teammates):** download `Argus-<version>-arm64-mac.zip` from the
+[latest release](https://github.com/sadeeb/dev-cockpit/releases/latest), unzip, and drag `Argus.app`
+into `/Applications`. Apple Silicon only for now.
+
+The build is unsigned (no Apple Developer ID), so macOS quarantines downloads. On first launch,
+either right-click the app and choose **Open**, or clear the quarantine flag:
+
+```bash
+xattr -cr /Applications/Argus.app
+```
+
+**From source:**
 
 ```bash
 npm install
 npm run dev                 # development (hot reload)
-npm run dist                # package /dist/mac-arm64/Argus.app, copy it to /Applications
+npm run dist                # package dist/mac-arm64/Argus.app, copy it to /Applications
 ```
 
 Requirements (the welcome screen checks these for you):

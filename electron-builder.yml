@@ -21,6 +21,8 @@ mac:
   target:
     - target: dir
       arch: arm64
+    - target: zip
+      arch: arm64
   # unsigned local build — no Developer ID on this machine
   identity: null
 
