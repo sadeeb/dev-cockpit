@@ -1,6 +1,7 @@
 import { Check, CircleDot, LayoutGrid, MonitorPlay, Plus, Sparkles, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { store, type AppState } from '../store'
+import { ArgusMark } from './ArgusMark'
 
 export function PreflightList({ state }: { state: AppState }): ReactNode {
   if (!state.preflight) return <div className="dim">Checking your environment…</div>
@@ -23,8 +24,8 @@ export function Welcome({ state }: { state: AppState }): ReactNode {
   return (
     <div className="welcome">
       <div className="welcome-inner">
-        <div className="brand-mark large" aria-hidden>
-          <span /><span /><span /><span />
+        <div className="welcome-mark" aria-hidden>
+          <ArgusMark size={72} />
         </div>
         <h1>Argus</h1>
         <p className="welcome-tag">

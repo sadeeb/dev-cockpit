@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { SessionRow } from '../../../shared/types'
 import { store, type AppState } from '../store'
 import { baseName, cx, timeAgo } from '../util'
+import { ArgusMark } from './ArgusMark'
 
 /** Sessions are numbered color blocks, units.gr-rail style - the color is the session's identity. */
 const CARD_COLORS = ['c-blue', 'c-yellow', 'c-orange', 'c-green', 'c-purple']
@@ -51,9 +52,7 @@ export function Sidebar({ state }: { state: AppState }): ReactNode {
   return (
     <nav className="sidebar">
       <div className="brand">
-        <span className="brand-mark" aria-hidden>
-          <span /><span /><span /><span />
-        </span>
+        <ArgusMark size={20} />
         <span className="brand-name">Argus</span>
       </div>
 
