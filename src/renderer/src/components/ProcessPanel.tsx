@@ -56,22 +56,22 @@ export function ProcessPanel({ state, row }: { state: AppState; row: SessionRow 
             spellCheck={false}
             onChange={(e) => setCmd(e.target.value)}
           />
-          <button className="icon-btn" type="submit" title="Start process" disabled={!cmd.trim()}>
+          <button className="icon-btn" type="submit" data-tip="Run it" disabled={!cmd.trim()}>
             <Play size={13} />
           </button>
         </form>
-        <button className="icon-btn" title="Drop recent output into the chat" disabled={!ui.lines.length} onClick={sendRecent}>
+        <button className="icon-btn" data-tip="Send recent output to chat" disabled={!ui.lines.length} onClick={sendRecent}>
           <MessageSquarePlus size={13} />
         </button>
         <button
           className="icon-btn"
-          title="Clear output"
+          data-tip="Clear output"
           disabled={!ui.lines.length}
           onClick={() => void window.cockpit.procClear(row.id)}
         >
           <Trash2 size={13} />
         </button>
-        <button className="icon-btn" title="Hide panel" onClick={() => store.setProcPanel(row.id, false)}>
+        <button className="icon-btn" data-tip="Hide panel" onClick={() => store.setProcPanel(row.id, false)}>
           <X size={13} />
         </button>
       </div>
@@ -82,7 +82,7 @@ export function ProcessPanel({ state, row }: { state: AppState; row: SessionRow 
             <span key={p.id} className={cx('proc-chip', p.running ? 'running' : 'stopped')} title={p.command}>
               <span className="proc-chip-cmd">{p.command}</span>
               {p.running ? (
-                <button title="Stop" onClick={() => void window.cockpit.procStop(row.id, p.id)}>
+                <button data-tip="Stop" onClick={() => void window.cockpit.procStop(row.id, p.id)}>
                   <Square size={9} fill="currentColor" />
                 </button>
               ) : (

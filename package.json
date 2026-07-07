@@ -1,7 +1,7 @@
 {
   "name": "argus",
   "productName": "Argus",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Mission-control UI for Claude Code: structured sessions, auto-titles, GitHub issue linking, a live multi-session board, and a shared agent-driven browser.",
   "main": "out/main/index.js",
   "type": "commonjs",

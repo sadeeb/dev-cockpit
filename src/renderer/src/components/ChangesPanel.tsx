@@ -67,7 +67,7 @@ function FileRow({ row, file, onChanged }: { row: SessionRow; file: GitChanges['
         </span>
         <button
           className={cx('change-discard', confirming && 'confirming')}
-          title={confirming ? 'Click again to throw these changes away' : 'Discard changes to this file'}
+          data-tip={confirming ? 'Click again to discard' : 'Discard this file'}
           onClick={(e) => {
             e.stopPropagation()
             void discard()
@@ -157,10 +157,10 @@ export function ChangesPanel({ row }: { row: SessionRow }): ReactNode {
             {mergeConfirm ? 'Merge?' : 'Merge back'}
           </button>
         )}
-        <button className="icon-btn" title="Refresh" onClick={() => void refresh()}>
+        <button className="icon-btn" data-tip="Refresh" onClick={() => void refresh()}>
           <RotateCw size={13} />
         </button>
-        <button className="icon-btn" title="Hide panel" onClick={() => store.setChangesPanel(row.id, false)}>
+        <button className="icon-btn" data-tip="Hide panel" onClick={() => store.setChangesPanel(row.id, false)}>
           <X size={13} />
         </button>
       </div>

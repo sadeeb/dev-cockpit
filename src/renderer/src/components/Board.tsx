@@ -71,7 +71,7 @@ function Card({ state, row }: { state: AppState; row: SessionRow }): ReactNode {
     >
       <button
         className="card-delete"
-        title="Delete this session"
+        data-tip="Delete session"
         onClick={(e) => {
           e.stopPropagation()
           store.openModal({ m: 'delete-session', id: row.id })

@@ -22,7 +22,7 @@ function SessionItem({ row, index, active }: { row: SessionRow; index: number; a
         <span className={cx('side-dot', row.status)} />
         <button
           className="side-delete"
-          title="Delete session"
+          data-tip="Delete session"
           onClick={(e) => {
             e.stopPropagation()
             store.openModal({ m: 'delete-session', id: row.id })
@@ -72,7 +72,7 @@ export function Sidebar({ state }: { state: AppState }): ReactNode {
 
       <div className="side-section">
         <span>Sessions</span>
-        <button className="icon-btn" title="New session (⌘N)" onClick={() => store.openModal({ m: 'new-session' })}>
+        <button className="icon-btn" data-tip="New session (⌘N)" onClick={() => store.openModal({ m: 'new-session' })}>
           <Plus size={15} />
         </button>
       </div>

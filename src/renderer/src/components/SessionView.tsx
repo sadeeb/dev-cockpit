@@ -225,35 +225,35 @@ export function SessionView({ state, row }: { state: AppState; row: SessionRow }
           />
           <button
             className={cx('icon-btn', row.browserEnabled && 'active')}
-            title={row.browserEnabled ? 'Browser tools enabled. Click to disable' : 'Enable browser tools (Playwright)'}
+            data-tip={row.browserEnabled ? 'Browser tools: on' : 'Browser tools: off'}
             onClick={() => store.toggleBrowser(row.id, !row.browserEnabled)}
           >
             <Globe size={15} />
           </button>
           <button
             className="icon-btn"
-            title="Fork this session and try a different approach from the same history"
+            data-tip="Fork this session"
             onClick={() => void store.forkSession(row.id)}
           >
             <GitFork size={15} />
           </button>
           <button
             className={cx('icon-btn', changesOpen && 'active')}
-            title="Working-tree changes (diff, commit, discard)"
+            data-tip="Changes: diff, commit, discard"
             onClick={() => store.setChangesPanel(row.id, !changesOpen)}
           >
             <GitBranch size={15} />
           </button>
           <button
             className={cx('icon-btn', procOpen && 'active', !procOpen && procsRunning && 'attention')}
-            title="Background processes (dev server, watchers)"
+            data-tip="Processes: run your dev server"
             onClick={() => store.setProcPanel(row.id, !procOpen)}
           >
             <SquareTerminal size={15} />
           </button>
           <button
             className={cx('icon-btn', drawerOpen && 'active')}
-            title="Raw agent event stream"
+            data-tip="Raw agent events"
             onClick={() => store.setDrawer(row.id, !drawerOpen)}
           >
             <Braces size={15} />

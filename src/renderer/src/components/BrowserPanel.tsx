@@ -53,13 +53,13 @@ function ConsoleDrawer({ row, entries, url }: { row: SessionRow; entries: Consol
         </button>
         <button
           className="icon-btn"
-          title="Drop recent console output into the chat"
+          data-tip="Send recent lines to chat"
           disabled={!entries.length}
           onClick={sendRecent}
         >
           <MessageSquarePlus size={13} />
         </button>
-        <button className="icon-btn" title="Clear console" disabled={!entries.length} onClick={() => store.clearConsole(row.id)}>
+        <button className="icon-btn" data-tip="Clear console" disabled={!entries.length} onClick={() => store.clearConsole(row.id)}>
           <Trash2 size={13} />
         </button>
       </div>
@@ -186,7 +186,7 @@ export function BrowserPanel({ state, row, full }: { state: AppState; row: Sessi
         </form>
         <button
           className={cx('icon-btn', inspecting && 'active')}
-          title={inspecting ? 'Cancel point-at-element' : 'Point at an element: click it in the preview to drop it into the chat'}
+          data-tip={inspecting ? 'Cancel pointing' : 'Point at an element'}
           disabled={!frame}
           onClick={() => setInspecting(!inspecting)}
         >
@@ -194,20 +194,20 @@ export function BrowserPanel({ state, row, full }: { state: AppState; row: Sessi
         </button>
         <button
           className="icon-btn"
-          title="Reload"
+          data-tip="Reload page"
           onClick={() => b?.url && void window.cockpit.browserNavigate(row.id, b.url)}
         >
           <RotateCw size={13} />
         </button>
         <button
           className="icon-btn"
-          title={b?.running ? 'Quit this session’s browser' : 'Launch browser'}
+          data-tip={b?.running ? 'Quit browser' : 'Launch browser'}
           onClick={() => (b?.running ? void window.cockpit.browserClose(row.id) : void window.cockpit.browserOpen(row.id))}
         >
           <Power size={13} className={b?.running ? 'good' : ''} />
         </button>
         {!full && (
-          <button className="icon-btn" title="Hide panel" onClick={() => store.setBrowserPanel(row.id, false)}>
+          <button className="icon-btn" data-tip="Hide panel" onClick={() => store.setBrowserPanel(row.id, false)}>
             <X size={13} />
           </button>
         )}

@@ -5,6 +5,12 @@ All notable changes to Argus are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-07-07
+
+### Changed
+
+- Icon buttons now show instant styled tooltips on hover (black pill, appears in ~150ms) instead of the slow native browser tooltips that made the icons feel unlabeled
+
 ## [1.2.1] - 2026-07-07
 
 ### Fixed
